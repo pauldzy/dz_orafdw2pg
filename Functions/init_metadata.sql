@@ -5,7 +5,7 @@ CREATE OR REPLACE FUNCTION dz_pg.init_metadata(
 AS
 $BODY$ 
 DECLARE
-   str_sql VARCHAR(4000);
+   str_sql VARCHAR(32000);
    
 BEGIN
 
@@ -13,7 +13,9 @@ BEGIN
    -- Step 10
    -- Build all_tables
    ----------------------------------------------------------------------------
-   DROP FOREIGN TABLE IF EXISTS pTargetSchema || '.all_tables';
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_tables';
+   
+   EXECUTE str_sql;
    
    str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_tables( '
            || '    owner                     character varying(30)  '
@@ -81,7 +83,9 @@ BEGIN
    -- Step 20
    -- Build all_tab_columns
    ----------------------------------------------------------------------------
-   DROP FOREIGN TABLE IF EXISTS pTargetSchema || '.all_tab_columns';
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_tab_columns';
+   
+   EXECUTE str_sql;
    
    str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_tab_columns( '
            || '    owner                     character varying(30)  '
@@ -138,7 +142,7 @@ BEGIN
            || '   ,DENSITY '
            || '   ,NUM_NULLS '
            || '   ,NUM_BUCKETS '
-           || '   ,CASE WHEN LAST_ANALYZED < TO_DATE(''01/01/1000'',''MM/DD/YYYY'') THEN NULL ELSE LAST_ANALYZED END AS LAST_ANALYZED '
+           || '   ,CASE WHEN LAST_ANALYZED < TO_DATE(''''01/01/1000'''',''''MM/DD/YYYY'''') THEN NULL ELSE LAST_ANALYZED END AS LAST_ANALYZED '
            || '   ,SAMPLE_SIZE '
            || '   ,CHARACTER_SET_NAME '
            || '   ,CHAR_COL_DECL_LENGTH '
@@ -160,9 +164,11 @@ BEGIN
    -- Step 30
    -- Build all_constraints
    ----------------------------------------------------------------------------
-   DROP FOREIGN TABLE IF EXISTS pTargetSchema || '.all_constraints';
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_constraints';
    
-   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_constraints '
+   EXECUTE str_sql;
+   
+   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_constraints('
            || '    owner                     character varying(120) '
            || '   ,constraint_name           character varying(30)  '
            || '   ,constraint_type           character varying(1)   '
@@ -202,7 +208,7 @@ BEGIN
            || '   ,GENERATED '
            || '   ,BAD '
            || '   ,RELY '
-           || '   ,CASE WHEN LAST_CHANGE < TO_DATE(''01/01/1000'',''MM/DD/YYYY'') THEN NULL ELSE LAST_CHANGE END AS LAST_CHANGE '
+           || '   ,CASE WHEN LAST_CHANGE < TO_DATE(''''01/01/1000'''',''''MM/DD/YYYY'''') THEN NULL ELSE LAST_CHANGE END AS LAST_CHANGE '
            || '   ,INDEX_OWNER '
            || '   ,INDEX_NAME '
            || '   ,INVALID '
@@ -217,9 +223,11 @@ BEGIN
    -- Step 40
    -- Build all_indexes
    ----------------------------------------------------------------------------
-   DROP FOREIGN TABLE IF EXISTS pTargetSchema || '.all_indexes';
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_indexes';
    
-   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_indexes '
+   EXECUTE str_sql;
+   
+   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_indexes('
            || '    owner                     character varying(30)  '
            || '   ,index_name                character varying(30)  '
            || '   ,index_type                character varying(27)  '
@@ -314,7 +322,7 @@ BEGIN
            || '   ,STATUS '
            || '   ,NUM_ROWS '
            || '   ,SAMPLE_SIZE '
-           || '   ,CASE WHEN LAST_ANALYZED < TO_DATE(''01/01/1000'',''MM/DD/YYYY'') THEN NULL ELSE LAST_ANALYZED END AS LAST_ANALYZED '
+           || '   ,CASE WHEN LAST_ANALYZED < TO_DATE(''''01/01/1000'''',''''MM/DD/YYYY'''') THEN NULL ELSE LAST_ANALYZED END AS LAST_ANALYZED '
            || '   ,DEGREE '
            || '   ,INSTANCES '
            || '   ,PARTITIONED '
@@ -350,9 +358,11 @@ BEGIN
    -- Step 50
    -- Build all_ind_columns
    ----------------------------------------------------------------------------
-   DROP FOREIGN TABLE IF EXISTS pTargetSchema || '.all_ind_columns';
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_ind_columns';
    
-   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_ind_columns '
+   EXECUTE str_sql;
+   
+   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_ind_columns('
            || '    index_owner               character varying(30)  '
            || '   ,index_name                character varying(30)  '
            || '   ,table_owner               character varying(30)  '
@@ -372,9 +382,11 @@ BEGIN
    -- Step 60
    -- Build all_sdo_geom_metadata
    ----------------------------------------------------------------------------
-   DROP FOREIGN TABLE IF EXISTS pTargetSchema || '.all_sdo_geom_metadata';
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_sdo_geom_metadata';
    
-   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_sdo_geom_metadata '
+   EXECUTE str_sql;
+   
+   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_sdo_geom_metadata('
            || '    owner                     character varying(32)  '
            || '   ,table_name                character varying(32)  '
            || '   ,column_name               character varying(32)  '
@@ -477,6 +489,12 @@ BEGIN
            
    EXECUTE str_sql;
    
+   ----------------------------------------------------------------------------
+   -- Step 70
+   -- Assume success
+   ----------------------------------------------------------------------------
+   RETURN true;
+   
 END;
 $BODY$
 LANGUAGE plpgsql;
@@ -484,9 +502,10 @@ LANGUAGE plpgsql;
 ALTER FUNCTION dz_pg.init_metadata(
     varchar
    ,varchar
-) OWNER TO dz_pg;
+) OWNER TO docker;
 
 GRANT EXECUTE ON FUNCTION dz_pg.init_metadata(
     varchar
    ,varchar
 ) TO PUBLIC;
+
