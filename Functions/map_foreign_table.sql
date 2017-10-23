@@ -62,6 +62,8 @@ BEGIN
            || ',a.data_scale '
            || ',a.nullable '
            || ',a.column_id '
+           || ',a.char_used '
+           || ',a.char_length '
            || 'FROM '
            || pMetadataSchema || '.all_tab_columns a '
            || 'WHERE '
@@ -70,19 +72,17 @@ BEGIN
            || 'ORDER BY '
            || 'a.column_id ';
    
-   OPEN r FOR EXECUTE str_sql; 
-   FETCH NEXT FROM r INTO rec;
+   OPEN r FOR EXECUTE str_sql USING pOracleOwner,pOracleTable;
+   FETCH NEXT FROM r INTO rec; 
    
    str_comma := ' ';
    WHILE FOUND 
    LOOP
-      FETCH NEXT FROM r INTO rec; 
-      
       IF rec.data_type IN ('BLOB','RAW','LONG RAW')
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map || 'bytea';
-         str_select := str_select || '   a.' || str_comma || LOWER(rec.column_name);
+         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -97,7 +97,7 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'double precision';
-         str_select := str_select || '   a.' || str_comma || LOWER(rec.column_name);
+         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -112,7 +112,7 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'real';
-         str_select := str_select || '   a.' || str_comma || LOWER(rec.column_name);
+         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -127,7 +127,7 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'character(' || rec.data_length::varchar || ')';
-         str_select := str_select || '   a.' || str_comma || LOWER(rec.column_name);
+         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -142,7 +142,7 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'text';
-         str_select := str_select || '   a.' || str_comma || LOWER(rec.column_name);
+         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -157,7 +157,7 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'timestamp(0)';
-         str_select := str_select || '   a.' || str_comma || LOWER(rec.column_name);
+         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -170,13 +170,12 @@ BEGIN
                
       ELSIF rec.data_type = 'NUMBER'
       THEN
-         IF rec.data_length = 22
-         AND rec.data_precision IS NULL
-         AND rec.data_scale = 0
+         IF ( rec.data_length = 22 AND rec.data_precision = 1     AND rec.data_scale = 0 )
+         OR ( rec.data_length = 22 AND rec.data_precision IS NULL AND rec.data_scale = 0 )
          THEN
             str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
             str_map    := str_map    || 'integer';
-            str_select := str_select || '   a.' || str_comma || LOWER(rec.column_name);
+            str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
             
             IF rec.nullable IS NOT NULL
             AND rec.nullable = 'Y'
@@ -188,7 +187,7 @@ BEGIN
          ELSE
             str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
             str_map    := str_map || 'numeric';
-            str_select := str_select || '   a.' || str_comma || LOWER(rec.column_name);
+            str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
             
             IF rec.data_precision IS NOT NULL
             THEN
@@ -220,7 +219,7 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'character(10)';
-         str_select := str_select || '   a.' || str_comma || LOWER(rec.column_name);
+         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -235,11 +234,20 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'character varying';
-         str_select := str_select || '   a.' || str_comma || LOWER(rec.column_name);
+         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
-         IF rec.data_length IS NOT NULL
+         IF rec.char_used = 'C'
+         AND rec.char_length IS NOT NULL
          THEN
-            str_map := str_map || '(' || rec.data_length::varchar || ')';
+            str_map := str_map || '(' || rec.char_length::varchar || ')';
+         
+         ELSE
+            IF rec.data_length IS NOT NULL
+            OR rec.char_length IS NOT NULL
+            THEN
+               str_map := str_map || '(' || rec.data_length::varchar || ')';
+            
+            END IF;
             
          END IF;
          
@@ -256,7 +264,7 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'timestamp(6)';
-         str_select := str_select || '   a.' || str_comma || LOWER(rec.column_name);
+         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -271,7 +279,7 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'timestamp(6)';
-         str_select := str_select || '   a.' || str_comma || LOWER(rec.column_name);
+         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -287,7 +295,7 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'geometry';
-         str_select := str_select || '   a.' || str_comma || LOWER(rec.column_name);
+         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -298,7 +306,12 @@ BEGIN
          
          str_comma := ',';
          
+      ELSE
+         RAISE WARNING 'Unable to map % %', rec.data_type, rec.data_type_owner;
+      
       END IF; 
+      RAISE WARNING 'map % % % %', rec.data_type, rec.data_length,rec.data_precision,rec.data_scale;
+      FETCH NEXT FROM r INTO rec; 
 
    END LOOP;
    
@@ -313,11 +326,11 @@ BEGIN
            || 'OPTIONS (table ''('
            || str_select
            || '   FROM '
-           || '   ' || pOracleSchema || '.' || pOracleTable || ' a '
+           || '   ' || pOracleOwner || '.' || pOracleTable || ' a '
            || ')'')';
            
-   EXECUTE str_sql;
-   
+   EXECUTE str_map;
+
    ----------------------------------------------------------------------------
    -- Step 50
    -- Assume success
