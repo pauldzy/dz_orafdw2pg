@@ -333,10 +333,12 @@ ALTER FUNCTION dz_pg.map_foreign_table(
    ,varchar
    ,varchar
    ,varchar
+   ,varchar
 ) OWNER TO docker;
 
 GRANT EXECUTE ON FUNCTION dz_pg.map_foreign_table(
     varchar
+   ,varchar
    ,varchar
    ,varchar
    ,varchar
