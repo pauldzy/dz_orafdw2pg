@@ -18,7 +18,6 @@ DECLARE
    ary_results          VARCHAR(32000)[];
    
    str_constraint       VARCHAR(255);
-   str_tablespace       VARCHAR(255);
    str_oracle_owner     VARCHAR(255);
    str_oracle_tablename VARCHAR(255);
    str_target_schema    VARCHAR(255);
@@ -30,15 +29,6 @@ BEGIN
    -- Step 10
    -- Check over incoming parameters
    ----------------------------------------------------------------------------
-   IF pTargetTablespace IS NOT NULL
-   THEN
-      str_tablespace := 'TABLESPACE ' || pTargetTablespace || ' ';
-      
-   ELSE
-      str_tablespace := ' ';
-   
-   END IF;
-   
    str_target_schema := LOWER(pTargetSchema);
 
    IF pTargetTableName IS NOT NULL
