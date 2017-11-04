@@ -10,7 +10,7 @@ AS
 $BODY$ 
 DECLARE
    str_sql              VARCHAR(32000);
-   str_select           VARCHAR(32000);
+   str_statment         VARCHAR(32000);
    int_count            INTEGER;
    ary_items            VARCHAR(32000)[];
    
@@ -34,6 +34,8 @@ BEGIN
       str_tablespace := ' ';
    
    END IF;
+   
+   str_target_schema := LOWER(pTargetSchema);
    
    IF pTargetTableName IS NOT NULL
    THEN
@@ -92,7 +94,7 @@ BEGIN
    -- Step 40
    -- Drop any existing table
    ----------------------------------------------------------------------------
-   str_sql := 'DROP TABLE IF EXISTS ' || pTargetSchema || '.' || pTargetName;
+   str_sql := 'DROP TABLE IF EXISTS ' || str_target_schema || '.' || str_target_tablename;
    
    EXECUTE str_sql;
    
@@ -100,7 +102,7 @@ BEGIN
    -- Step 50
    -- Create the target table
    ----------------------------------------------------------------------------
-   str_sql := 'CREATE TABLE ' || pTargetSchema || '.' || pTargetName || ' '
+   str_sql := 'CREATE TABLE ' || str_target_schema || '.' || str_target_tablename || ' '
            || 'AS SELECT * FROM ' || pForeignTableOwner || '.' || pForeignTableName || ' '
            || 'WHERE 1 = 2 ' || str_tablespace;
    
@@ -119,9 +121,9 @@ BEGIN
       ,pTargetTablespace  := pTargetTablespace
    );
    
-   FOREACH item IN ARRAY ary_items
+   FOREACH str_statment IN ARRAY ary_items
    LOOP
-      EXECUTE item;
+      EXECUTE str_statment;
    
    END LOOP;
    
@@ -137,9 +139,9 @@ BEGIN
       ,pTargetTableName   := pTargetTableName
    );
    
-   FOREACH item IN ARRAY ary_items
+   FOREACH str_statment IN ARRAY ary_items
    LOOP
-      EXECUTE item;
+      EXECUTE str_statment;
    
    END LOOP;
    
@@ -147,7 +149,7 @@ BEGIN
    -- Step 80
    -- Load the target table
    ----------------------------------------------------------------------------
-   str_sql := 'INSERT INTO ' || pTargetSchema || '.' || pTargetName || ' '
+   str_sql := 'INSERT INTO ' || str_target_schema || '.' || str_target_tablename || ' '
            || 'SELECT * FROM ' || pForeignTableOwner || '.' || pForeignTableName || ' '
            || 'WHERE 1 = 1 ';
            

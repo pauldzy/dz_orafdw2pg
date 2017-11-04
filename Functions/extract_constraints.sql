@@ -146,7 +146,7 @@ BEGIN
       THEN
          str_temp := 'ALTER TABLE ' || str_target_schema || '.' || str_target_tablename || ' '
                   || 'ADD CONSTRAINT ' || LOWER(rec.constraint_name) || ' CHECK('
-                  || LOWER(rec.search_condition) || ') ';
+                  || LOWER(REPLACE(rec.search_condition,'"','')) || ') ';
          
          ary_results := array_append(ary_results,str_temp);
          
@@ -162,7 +162,7 @@ BEGIN
    -- Step 50
    -- Assume success
    ----------------------------------------------------------------------------
-   RETURN true;
+   RETURN ary_results;
    
 END;
 $BODY$
