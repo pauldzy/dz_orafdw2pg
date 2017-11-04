@@ -135,10 +135,19 @@ BEGIN
          EXECUTE str_sql2 INTO ary_columns
          USING str_oracle_owner,str_oracle_tablename,rec.constraint_name;
          
-         str_temp := 'ALTER TABLE ' || str_target_schema || '.' || str_target_tablename || ' '
-                  || 'ADD CONSTRAINT ' || LOWER(rec.constraint_name) || ' ' || str_constraint || '('
-                  || LOWER(array_to_string(ary_columns,','))
-                  || ') USING INDEX ' || LOWER(rec.index_name);
+         IF rec.index_name IS NOT NULL
+         THEN         
+            str_temp := 'ALTER TABLE ' || str_target_schema || '.' || str_target_tablename || ' '
+                     || 'ADD CONSTRAINT ' || LOWER(rec.constraint_name) || ' ' || str_constraint || ' '
+                     || 'USING INDEX ' || LOWER(rec.index_name);
+                     
+         ELSE
+            str_temp := 'ALTER TABLE ' || str_target_schema || '.' || str_target_tablename || ' '
+                     || 'ADD CONSTRAINT ' || LOWER(rec.constraint_name) || ' ' || str_constraint || '('
+                     || LOWER(array_to_string(ary_columns,','))
+                     || ') ';
+         
+         END IF;
          
          ary_results := array_append(ary_results,str_temp);
                
