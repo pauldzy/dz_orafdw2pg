@@ -330,9 +330,26 @@ BEGIN
            || ')'')';
            
    EXECUTE str_map;
-
+   
    ----------------------------------------------------------------------------
    -- Step 50
+   -- Create the map entry
+   ----------------------------------------------------------------------------
+   str_sql := 'INSERT INTO ' || pMetadataSchema || '.oracle_fdw_table_map( '
+           || '    oracle_owner         '
+           || '   ,oracle_tablename     '
+           || '   ,foreign_table_schema '
+           || '   ,foreign_table_name   '
+           || ') VALUES ($1,$2,$3,$4) '
+           
+   EXECUTE str_sql USING
+    pOracleOwner
+   ,pOracleTable
+   ,pTargetSchema
+   ,LOWER(pOracleTable);
+
+   ----------------------------------------------------------------------------
+   -- Step 60
    -- Assume success
    ----------------------------------------------------------------------------
    RETURN true;

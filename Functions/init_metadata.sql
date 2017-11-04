@@ -534,10 +534,12 @@ LANGUAGE plpgsql;
 ALTER FUNCTION dz_pg.init_metadata(
     varchar
    ,varchar
+   ,varchar
 ) OWNER TO docker;
 
 GRANT EXECUTE ON FUNCTION dz_pg.init_metadata(
     varchar
+   ,varchar
    ,varchar
 ) TO PUBLIC;
 
