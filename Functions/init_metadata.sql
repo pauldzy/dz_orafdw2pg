@@ -188,7 +188,7 @@ BEGIN
            || '   ,constraint_name           character varying(30)  '
            || '   ,constraint_type           character varying(1)   '
            || '   ,table_name                character varying(30)  '
-           || '   ,search_condition          bytea                  '
+           || '   ,search_condition          character varying(32000)'
            || '   ,r_owner                   character varying(120) '
            || '   ,r_constraint_name         character varying(30)  '
            || '   ,delete_rule               character varying(9)   '
@@ -415,6 +415,27 @@ BEGIN
    
    ----------------------------------------------------------------------------
    -- Step 80
+   -- Build all_ind_expressions
+   ----------------------------------------------------------------------------
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_ind_expressions';
+   
+   EXECUTE str_sql;
+   
+   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_ind_expressions('
+           || '    index_owner               character varying(30)  '
+           || '   ,index_name                character varying(30)  '
+           || '   ,table_owner               character varying(30)  '
+           || '   ,table_name                character varying(30)  '
+           || '   ,column_expression         character varying(32000)'
+           || '   ,column_position           numeric                '
+           || ') '
+           || 'SERVER ' || pForeignServer || ' '
+           || 'OPTIONS (table ''(SELECT * FROM SYS.ALL_IND_EXPRESSIONS)'')';
+           
+   EXECUTE str_sql;
+   
+   ----------------------------------------------------------------------------
+   -- Step 90
    -- Build all_sdo_geom_metadata
    ----------------------------------------------------------------------------
    str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_sdo_geom_metadata';
@@ -525,7 +546,7 @@ BEGIN
    EXECUTE str_sql;
    
    ----------------------------------------------------------------------------
-   -- Step 90
+   -- Step 100
    -- Create the map table
    ----------------------------------------------------------------------------
    str_sql := 'DROP TABLE IF EXISTS ' || pTargetSchema || '.oracle_fdw_table_map';
@@ -544,7 +565,7 @@ BEGIN
    EXECUTE str_sql;
    
    ----------------------------------------------------------------------------
-   -- Step 100
+   -- Step 110
    -- Assume success
    ----------------------------------------------------------------------------
    RETURN true;

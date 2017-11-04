@@ -25,6 +25,8 @@ DECLARE
    str_oracle_tablename VARCHAR(255);
    str_target_schema    VARCHAR(255);
    str_target_tablename VARCHAR(255);
+   str_nvl_field        VARCHAR(255);
+   str_nvl_isnull       VARCHAR(255);
    
 BEGIN
 
@@ -97,7 +99,7 @@ BEGIN
    END IF;
 
    ----------------------------------------------------------------------------
-   -- Step 30
+   -- Step 40
    -- Get list of constraints
    ----------------------------------------------------------------------------
    str_sql := 'SELECT '
@@ -116,17 +118,17 @@ BEGIN
    int_count := 1;
    WHILE FOUND 
    LOOP
-      IF rec.uniqueness = 'UNIQUE'
+      IF rec.index_type IN ('BITMAP','NORMAL')
       THEN
-         str_unique := 'UNIQUE';
+         IF rec.uniqueness = 'UNIQUE'
+         THEN
+            str_unique := 'UNIQUE';
+            
+         ELSE
+            str_unique := '';
+            
+         END IF;
          
-      ELSE
-         str_unique := '';
-         
-      END IF;
-   
-      IF rec.index_type = 'NORMAL'
-      THEN
          str_sql2 := 'SELECT '
                   || 'ARRAY( '
                   || '   SELECT '
@@ -146,14 +148,45 @@ BEGIN
          
          str_temp := 'CREATE ' || str_unique || ' INDEX ' || LOWER(rec.index_name) || ' '
                   || 'ON ' || str_target_schema || '.' || str_target_tablename || '('
-                  || LOWER(array_to_string(ary_results,','))
-                  || ')' || str_tablespace;
+                  || LOWER(array_to_string(ary_columns,','))
+                  || ') ' || str_tablespace;
                
-         ary_results := ary_append(ary_results,str_temp);
+         ary_results := array_append(ary_results,str_temp);
          
-      ELSIF rec.index_type = 'C'
+      ELSIF rec.index_type IN ('FUNCTION-BASED NORMAL','FUNCTION-BASED BITMAP')
       THEN
-         str_temp := 'l';
+         str_sql2 := 'SELECT '
+                  || 'ARRAY( '
+                  || '   SELECT '
+                  || '   a.column_expression '
+                  || '   FROM '
+                  || '   ' || pMetadataSchema || '.all_ind_expressions a '
+                  || '   WHERE '
+                  || '       a.table_owner = $1 '
+                  || '   AND a.table_name = $2 '
+                  || '   AND a.index_name = $3 '
+                  || '   ORDER BY '
+                  || '   a.column_position '
+                  || ') ';
+                  
+         EXECUTE str_sql2 INTO ary_columns
+         USING str_oracle_owner,str_oracle_tablename,rec.index_name;
+         
+         str_temp = REPLACE(LOWER(ary_columns[1]),'"','');
+         
+         IF SUBSTR(str_temp,1,7) = 'substr('
+         OR SUBSTR(str_temp,1,6) = 'upper('
+         OR SUBSTR(str_temp,1,4) = 'nvl('
+         THEN
+            str_temp := REPLACE(str_temp,'nvl(','coalesce(');
+         
+            str_temp := 'CREATE INDEX ' || LOWER(rec.index_name) || ' '
+                     || 'ON ' || str_target_schema || '.' || str_target_tablename || '('
+                     || str_temp || ') ' || str_tablespace;
+                     
+            ary_results := array_append(ary_results,str_temp);
+            
+         END IF;
          
       END IF;
    
@@ -164,17 +197,7 @@ BEGIN
    CLOSE r; 
    
    ----------------------------------------------------------------------------
-   -- Step 40
-   -- Generate the foreign table columns mapping
-   ----------------------------------------------------------------------------
-   
-   ----------------------------------------------------------------------------
    -- Step 50
-   -- Create the map entry
-   ----------------------------------------------------------------------------
-
-   ----------------------------------------------------------------------------
-   -- Step 60
    -- Assume success
    ----------------------------------------------------------------------------
    RETURN ary_results;
