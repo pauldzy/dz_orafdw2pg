@@ -351,8 +351,8 @@ BEGIN
            || 'ON '
            || 'c.oid = b.relnamespace '
            || 'WHERE '
-           || '    b.relname = $1 '
-           || 'AND c.nspname = $2 ';
+           || '    c.nspname = $1 '
+           || 'AND b.relname = $2 ';
            
    EXECUTE str_sql INTO oid_ftrelid,oid_ftserver
    USING LOWER(pTargetSchema),LOWER(pOracleTable);
@@ -364,7 +364,7 @@ BEGIN
    str_sql := 'INSERT INTO ' || pMetadataSchema || '.oracle_fdw_table_map( '
            || '    ftrelid              '
            || '   ,ftserver             '
-           || '    oracle_owner         '
+           || '   ,oracle_owner         '
            || '   ,oracle_tablename     '
            || '   ,foreign_table_schema '
            || '   ,foreign_table_name   '
