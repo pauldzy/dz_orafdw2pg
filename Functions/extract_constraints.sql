@@ -76,7 +76,7 @@ BEGIN
            || '    a.owner = $1 '
            || 'AND a.table_name = $2 ';
            
-   EXECUTE str_sql INTO int_count USING pOracleOwner,pOracleTable;
+   EXECUTE str_sql INTO int_count USING str_oracle_owner,str_oracle_tablename;
    
    IF int_count <> 1
    THEN
@@ -89,18 +89,18 @@ BEGIN
    -- Get list of constraints
    ----------------------------------------------------------------------------
    str_sql := 'SELECT '
-           || ' a.constraint_name '
-           || ',a.constraint_type '
+           || ' a.constraint_name  '
+           || ',a.constraint_type  '
            || ',a.search_condition '
-           || ',a.index_owner     '
-           || ',a.index_name      '
+           || ',a.index_owner      '
+           || ',a.index_name       '
            || 'FROM '
            || pMetadataSchema || '.all_constraints a '
            || 'WHERE '
            || '    a.owner = $1 '
            || 'AND a.table_name = $2 ';
            
-   OPEN r FOR EXECUTE str_sql USING pOracleOwner,pOracleTable;
+   OPEN r FOR EXECUTE str_sql USING str_oracle_owner,str_oracle_tablename;
    FETCH NEXT FROM r INTO rec; 
    
    int_count := 1;
@@ -133,7 +133,7 @@ BEGIN
                   || ') ';
                   
          EXECUTE str_sql2 INTO ary_columns
-         USING pOracleOwner,pOracleTable,rec.constraint_name;
+         USING str_oracle_owner,str_oracle_tablename,rec.constraint_name;
          
          str_temp := 'ALTER TABLE ' || str_target_schema || '.' || str_target_tablename || ' '
                   || 'ADD CONSTRAINT ' || LOWER(rec.constraint_name) || ' ' || str_constraint || '('
