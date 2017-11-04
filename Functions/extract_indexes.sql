@@ -12,7 +12,7 @@ DECLARE
    str_sql              VARCHAR(32000);
    str_sql2             VARCHAR(32000);
    
-   ary_columns          VARCHAR(30)[];
+   ary_columns          VARCHAR(255)[];
    int_count            INTEGER;
    r                    REFCURSOR; 
    rec                  RECORD;
@@ -172,13 +172,13 @@ BEGIN
          EXECUTE str_sql2 INTO ary_columns
          USING str_oracle_owner,str_oracle_tablename,rec.index_name;
          
-         str_temp = REPLACE(LOWER(ary_columns[1]),'"','');
+         str_temp = REPLACE(ary_columns[1],'"','');
          
-         IF SUBSTR(str_temp,1,7) = 'substr('
-         OR SUBSTR(str_temp,1,6) = 'upper('
-         OR SUBSTR(str_temp,1,4) = 'nvl('
+         IF SUBSTR(LOWER(str_temp),1,7) = 'substr('
+         OR SUBSTR(LOWER(str_temp),1,6) = 'upper('
+         OR SUBSTR(LOWER(str_temp),1,4) = 'nvl('
          THEN
-            str_temp := REPLACE(str_temp,'nvl(','coalesce(');
+            str_temp := REGEXP_REPLACE(str_temp,'(N|n)(V|v)(L|l)\(','coalesce(');
          
             str_temp := 'CREATE INDEX ' || LOWER(rec.index_name) || ' '
                      || 'ON ' || str_target_schema || '.' || str_target_tablename || '('
