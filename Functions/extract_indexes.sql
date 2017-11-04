@@ -128,18 +128,21 @@ BEGIN
       IF rec.index_type = 'NORMAL'
       THEN
          str_sql2 := 'SELECT '
-                  || 'array_agg(a.column_name::varchar) AS column_name '
-                  || 'FROM '
-                  || pMetadataSchema || '.all_ind_columns a '
-                  || 'WHERE '
-                  || '    a.table_owner = $1 '
-                  || 'AND a.table_name = $2 '
-                  || 'AND a.index_name = $3 '
-                  || 'ORDER BY '
-                  || 'a.column_position ';
+                  || 'ARRAY( '
+                  || '   SELECT '
+                  || '   a.column_name '
+                  || '   FROM '
+                  || '   ' || pMetadataSchema || '.all_ind_columns a '
+                  || '   WHERE '
+                  || '       a.table_owner = $1 '
+                  || '   AND a.table_name = $2 '
+                  || '   AND a.index_name = $3 '
+                  || '   ORDER BY '
+                  || '   a.column_position '
+                  || ') ';
                   
          EXECUTE str_sql2 INTO ary_columns
-         USING str_oracle_owner,str_oracle_tablename,rec.constraint_name;
+         USING str_oracle_owner,str_oracle_tablename,rec.index_name;
          
          str_temp := 'CREATE ' || str_unique || ' INDEX ' || LOWER(rec.index_name) || ' '
                   || 'ON ' || str_target_schema || '.' || str_target_tablename || '('
@@ -148,7 +151,7 @@ BEGIN
                
          ary_append(ary_results,str_temp);
          
-      ELSIF rec.constraint_type = 'C'
+      ELSIF rec.index_type = 'C'
       THEN
          str_temp := 'l';
          
@@ -180,7 +183,7 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 
-ALTER FUNCTION dz_pg.extract_constraints(
+ALTER FUNCTION dz_pg.extract_indexes(
     varchar
    ,varchar
    ,varchar
@@ -189,7 +192,7 @@ ALTER FUNCTION dz_pg.extract_constraints(
    ,varchar
 ) OWNER TO docker;
 
-GRANT EXECUTE ON FUNCTION dz_pg.extract_constraints(
+GRANT EXECUTE ON FUNCTION dz_pg.extract_indexes(
     varchar
    ,varchar
    ,varchar
