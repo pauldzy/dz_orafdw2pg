@@ -28,7 +28,7 @@ BEGIN
    -- Step 30
    -- Remap 241 to proper UTF8
    ----------------------------------------------------------------------------
-   str_output := 'REPLACE(' || str_output || ',CHR(241),UNISTR(''''\00F1'''')) AS ' || str_fieldname;
+   str_output := 'CONVERT(' || str_output || ',''''UTF8'''') AS ' || str_fieldname;
 
    ----------------------------------------------------------------------------
    -- Step 40

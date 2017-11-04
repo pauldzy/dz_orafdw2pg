@@ -102,9 +102,9 @@ BEGIN
    -- Step 50
    -- Create the target table
    ----------------------------------------------------------------------------
-   str_sql := 'CREATE TABLE ' || str_target_schema || '.' || str_target_tablename || ' '
+   str_sql := 'CREATE TABLE ' || str_target_schema || '.' || str_target_tablename || ' ' || str_tablespace
            || 'AS SELECT * FROM ' || pForeignTableOwner || '.' || pForeignTableName || ' '
-           || 'WHERE 1 = 2 ' || str_tablespace;
+           || 'WHERE 1 = 2 ';
    
    EXECUTE str_sql;
    
