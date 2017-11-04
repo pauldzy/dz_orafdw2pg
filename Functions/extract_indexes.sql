@@ -146,10 +146,10 @@ BEGIN
          
          str_temp := 'CREATE ' || str_unique || ' INDEX ' || LOWER(rec.index_name) || ' '
                   || 'ON ' || str_target_schema || '.' || str_target_tablename || '('
-                  || LOWER(array_to_string(ary_results,',')) ||
+                  || LOWER(array_to_string(ary_results,','))
                   || ')' || str_tablespace;
                
-         ary_append(ary_results,str_temp);
+         ary_results := ary_append(ary_results,str_temp);
          
       ELSIF rec.index_type = 'C'
       THEN
