@@ -25,7 +25,7 @@ BEGIN
    END IF;
    
    ----------------------------------------------------------------------------
-   -- Step 10
+   -- Step 20
    -- Build all_tables
    ----------------------------------------------------------------------------
    str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_tables';
@@ -95,7 +95,7 @@ BEGIN
    EXECUTE str_sql;
    
    ----------------------------------------------------------------------------
-   -- Step 20
+   -- Step 30
    -- Build all_tab_columns
    ----------------------------------------------------------------------------
    str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_tab_columns';
@@ -176,7 +176,7 @@ BEGIN
    EXECUTE str_sql;
    
    ----------------------------------------------------------------------------
-   -- Step 30
+   -- Step 40
    -- Build all_constraints
    ----------------------------------------------------------------------------
    str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_constraints';
@@ -235,7 +235,27 @@ BEGIN
    EXECUTE str_sql;
    
    ----------------------------------------------------------------------------
-   -- Step 40
+   -- Step 50
+   -- Build all_cons_columns
+   ----------------------------------------------------------------------------
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_cons_columns';
+   
+   EXECUTE str_sql;
+   
+   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_cons_columns('
+           || '    owner                     character varying(30)  '
+           || '   ,constraint_name           character varying(30)  '
+           || '   ,table_name                character varying(30)  '
+           || '   ,column_name               character varying(4000)'
+           || '   ,position                  numeric                '
+           || ') '
+           || 'SERVER ' || pForeignServer || ' '
+           || 'OPTIONS (table ''(SELECT * FROM SYS.ALL_CONS_COLUMNS)'')';
+           
+   EXECUTE str_sql;
+   
+   ----------------------------------------------------------------------------
+   -- Step 60
    -- Build all_indexes
    ----------------------------------------------------------------------------
    str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_indexes';
@@ -370,7 +390,7 @@ BEGIN
    EXECUTE str_sql;
    
    ----------------------------------------------------------------------------
-   -- Step 50
+   -- Step 70
    -- Build all_ind_columns
    ----------------------------------------------------------------------------
    str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_ind_columns';
@@ -394,7 +414,7 @@ BEGIN
    EXECUTE str_sql;
    
    ----------------------------------------------------------------------------
-   -- Step 60
+   -- Step 80
    -- Build all_sdo_geom_metadata
    ----------------------------------------------------------------------------
    str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_sdo_geom_metadata';
@@ -505,8 +525,8 @@ BEGIN
    EXECUTE str_sql;
    
    ----------------------------------------------------------------------------
-   -- Step 70
-   -- Assume success
+   -- Step 90
+   -- Create the map table
    ----------------------------------------------------------------------------
    str_sql := 'DROP TABLE IF EXISTS ' || pTargetSchema || '.oracle_fdw_table_map';
    
@@ -522,7 +542,7 @@ BEGIN
    EXECUTE str_sql;
    
    ----------------------------------------------------------------------------
-   -- Step 80
+   -- Step 100
    -- Assume success
    ----------------------------------------------------------------------------
    RETURN true;

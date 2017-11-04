@@ -14,9 +14,6 @@ DECLARE
    str_target_name VARCHAR(32000);
    str_select      VARCHAR(32000);
    int_count       INTEGER;
-   r               REFCURSOR; 
-   rec             RECORD;
-   str_comma       VARCHAR(1);
    
 BEGIN
    
@@ -83,6 +80,26 @@ BEGIN
    -- Step 50
    -- Look for primary key on source
    ----------------------------------------------------------------------------
+   str_sql := 'SELECT '
+           || ' a.oracle_schema '
+           || ',a.oracle_tablename '
+           || 'FROM '
+           || pMetadataSchema || '.oracle_fdw_table_map a '
+           || 'WHERE '
+           || '    a.foreign_table_schema = $1 '
+           || 'AND a.foreign_table_name   = $2 ';
+           
+   BEGIN
+      EXECUTE str_sql INTO str_oracle_schema,str_oracle_tablename
+      USING pForeignTableOwner,pForeignTableName;
+   
+   EXCEPTION
+      WHEN NO_DATA_FOUND
+      THEN
+         str_oracle_schema := NULL;
+         str_oracle_tablename := NULL;
+         
+   END;
    
    ----------------------------------------------------------------------------
    -- Step 60

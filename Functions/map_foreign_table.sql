@@ -310,7 +310,7 @@ BEGIN
          RAISE WARNING 'Unable to map % %', rec.data_type, rec.data_type_owner;
       
       END IF; 
-      RAISE WARNING 'map % % % %', rec.data_type, rec.data_length,rec.data_precision,rec.data_scale;
+      --RAISE WARNING 'map % % % %', rec.data_type, rec.data_length,rec.data_precision,rec.data_scale;
       FETCH NEXT FROM r INTO rec; 
 
    END LOOP;
@@ -340,7 +340,7 @@ BEGIN
            || '   ,oracle_tablename     '
            || '   ,foreign_table_schema '
            || '   ,foreign_table_name   '
-           || ') VALUES ($1,$2,$3,$4) '
+           || ') VALUES ($1,$2,$3,$4)   ';
            
    EXECUTE str_sql USING
     pOracleOwner
