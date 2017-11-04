@@ -129,7 +129,7 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'character(' || rec.data_length::varchar || ')';
-         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
+         str_select := str_select || '   ' || str_comma || 'REPLACE(a.' || LOWER(rec.column_name) || ',CHR(0),'''') ';
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -236,7 +236,7 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'character varying';
-         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
+         str_select := str_select || '   ' || str_comma || 'REPLACE(a.' || LOWER(rec.column_name) || ',CHR(0),'''')';
          
          IF rec.char_used = 'C'
          AND rec.char_length IS NOT NULL
