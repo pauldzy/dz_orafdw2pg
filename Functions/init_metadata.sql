@@ -533,10 +533,12 @@ BEGIN
    EXECUTE str_sql;
    
    str_sql := 'CREATE TABLE ' || pTargetSchema || '.oracle_fdw_table_map('
-           || '    oracle_owner              character varying(30)  '
-           || '   ,oracle_tablename          character varying(30)  '
-           || '   ,foreign_table_schema      character varying(255) '
-           || '   ,foreign_table_name        character varying(255) '
+           || '    ftrelid                   oid                    PRIMARY KEY '
+           || '   ,ftserver                  oid                    NOT NULL '
+           || '   ,oracle_owner              character varying(30)  NOT NULL '
+           || '   ,oracle_tablename          character varying(30)  NOT NULL '
+           || '   ,foreign_table_schema      character varying(255) NOT NULL '
+           || '   ,foreign_table_name        character varying(255) NOT NULL '
            || ') ' || str_tablespace;
            
    EXECUTE str_sql;

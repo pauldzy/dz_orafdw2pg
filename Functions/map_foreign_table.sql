@@ -8,14 +8,16 @@ CREATE OR REPLACE FUNCTION dz_pg.map_foreign_table(
 AS
 $BODY$ 
 DECLARE
-   str_sql    VARCHAR(32000);
-   str_map    VARCHAR(32000);
-   str_select VARCHAR(32000);
-   int_count  INTEGER;
-   r          REFCURSOR; 
-   rec        RECORD;
-   str_comma  VARCHAR(1);
-   
+   str_sql      VARCHAR(32000);
+   str_map      VARCHAR(32000);
+   str_select   VARCHAR(32000);
+   int_count    INTEGER;
+   r            REFCURSOR; 
+   rec          RECORD;
+   str_comma    VARCHAR(1);
+   oid_ftrelid  OID;
+   oid_ftserver OID;
+      
 BEGIN
 
    ----------------------------------------------------------------------------
@@ -333,19 +335,47 @@ BEGIN
    
    ----------------------------------------------------------------------------
    -- Step 50
+   -- Get the oids of the foreign table
+   ----------------------------------------------------------------------------
+   str_sql := 'SELECT '
+           || ' a.ftrelid '
+           || ',a.ftserver '
+           || 'FROM '
+           || 'pg_foreign_table a '
+           || 'JOIN '
+           || 'pg_class b '
+           || 'ON '
+           || 'a.ftrelid = b.oid '
+           || 'JOIN '
+           || 'pg_namespace c '
+           || 'ON '
+           || 'c.oid = b.relnamespace '
+           || 'WHERE '
+           || '    b.relname = $1 '
+           || 'AND c.nspname = $2 ';
+           
+   EXECUTE str_sql INTO oid_ftrelid,oid_ftserver
+   USING LOWER(pTargetSchema),LOWER(pOracleTable);
+   
+   ----------------------------------------------------------------------------
+   -- Step 50
    -- Create the map entry
    ----------------------------------------------------------------------------
    str_sql := 'INSERT INTO ' || pMetadataSchema || '.oracle_fdw_table_map( '
+           || '    ftrelid              '
+           || '   ,ftserver             '
            || '    oracle_owner         '
            || '   ,oracle_tablename     '
            || '   ,foreign_table_schema '
            || '   ,foreign_table_name   '
-           || ') VALUES ($1,$2,$3,$4)   ';
+           || ') VALUES ($1,$2,$3,$4,$5,$6)   ';
            
    EXECUTE str_sql USING
-    pOracleOwner
+    oid_ftrelid
+   ,oid_ftserver
+   ,pOracleOwner
    ,pOracleTable
-   ,pTargetSchema
+   ,LOWER(pTargetSchema)
    ,LOWER(pOracleTable);
 
    ----------------------------------------------------------------------------

@@ -1,25 +1,28 @@
-CREATE OR REPLACE FUNCTION dz_pg.extract_constraints(
+CREATE OR REPLACE FUNCTION dz_pg.extract_indexes(
     IN  pOracleOwner      varchar
    ,IN  pOracleTable      varchar
    ,IN  pMetadataSchema   varchar
    ,IN  pTargetSchema     varchar
    ,IN  pTargetName       varchar DEFAULT NULL
+   ,IN  pTargetTablespace varchar DEFAULT NULL
 ) RETURNS VARCHAR[]
 AS
 $BODY$ 
 DECLARE
-   str_sql       VARCHAR(32000);
-   str_sql2      VARCHAR(32000);
-   ary_name      VARCHAR(32000)[];
-   ary_type      VARCHAR(32000)[];
-   ary_columns   VARCHAR(30)[];
-   int_count     INTEGER;
-   r             REFCURSOR; 
-   rec           RECORD;
-   str_comma     VARCHAR(1);
-   str_temp      VARCHAR(32000);
-   ary_results   VARCHAR(32000)[];
-   str_tablename VARCHAR(30);
+   str_sql         VARCHAR(32000);
+   str_sql2        VARCHAR(32000);
+   str_tablespace  VARCHAR(32000);
+   str_unique      VARCHAR(32000);
+   ary_name        VARCHAR(32000)[];
+   ary_type        VARCHAR(32000)[];
+   ary_columns     VARCHAR(30)[];
+   int_count       INTEGER;
+   r               REFCURSOR; 
+   rec             RECORD;
+   str_comma       VARCHAR(1);
+   str_temp        VARCHAR(32000);
+   ary_results     VARCHAR(32000)[];
+   str_tablename   VARCHAR(30);
    
 BEGIN
 
@@ -34,6 +37,15 @@ BEGIN
    ELSE
       str_tablename := LOWER(pOracleTable);
       
+   END IF;
+   
+   IF pTargetTablespace IS NOT NULL
+   THEN
+      str_tablespace := 'TABLESPACE ' || pTargetTablespace || ' ';
+      
+   ELSE
+      str_tablespace := ' ';
+   
    END IF;
    
    ----------------------------------------------------------------------------
@@ -61,12 +73,13 @@ BEGIN
    -- Get list of constraints
    ----------------------------------------------------------------------------
    str_sql := 'SELECT '
-           || ' a.constraint_name '
-           || ',a.constraint_type '
+           || ' a.index_name '
+           || ',a.index_type '
+           || ',a.uniqueness '
            || 'FROM '
-           || pMetadataSchema || '.all_constraints a '
+           || pMetadataSchema || '.all_indexes a '
            || 'WHERE '
-           || '    a.owner = $1 '
+           || '    a.table_owner = $1 '
            || 'AND a.table_name = $2 ';
            
    OPEN r FOR EXECUTE str_sql USING pOracleOwner,pOracleTable;
@@ -75,25 +88,38 @@ BEGIN
    int_count := 1;
    WHILE FOUND 
    LOOP
-      IF rec.constraint_type = 'P'
+      IF rec.uniqueness = 'UNIQUE'
+      THEN
+         str_unique := 'UNIQUE';
+         
+      ELSE
+         str_unique := '';
+         
+      END IF;
+   
+      IF rec.index_type = 'NORMAL'
       THEN
          str_sql2 := 'SELECT '
                   || 'array_agg(a.column_name::varchar) AS column_name '
                   || 'FROM '
-                  || pMetadataSchema || '.all_cons_columns a '
+                  || pMetadataSchema || '.all_ind_columns a '
                   || 'WHERE '
-                  || '    a.owner = $1 '
+                  || '    a.table_owner = $1 '
                   || 'AND a.table_name = $2 '
-                  || 'AND a.constraint_name = $3 '
+                  || 'AND a.index_name = $3 '
                   || 'ORDER BY '
-                  || 'a.position ';
+                  || 'a.column_position ';
                   
          EXECUTE str_sql2 INTO ary_columns
          USING pOracleOwner,pOracleTable,rec.constraint_name;
          
-         str_temp := 'ALTER TABLE ' || pTargetSchema || '.' || str_tablename;
-         array_append(ary_results,str_temp);
+         str_temp := 'CREATE ' || str_unique || ' INDEX ' || LOWER(rec.index_name) || ' '
+                  || 'ON ' || pTargetSchema || '.' || str_tablename || '('
+                  || LOWER(array_append(ary_results,str_temp)) ||
+                  || ')' || str_tablespace;
                
+         ary_append(ary_results,str_temp);
+         
       ELSIF rec.constraint_type = 'C'
       THEN
          str_temp := 'l';
@@ -120,7 +146,7 @@ BEGIN
    -- Step 60
    -- Assume success
    ----------------------------------------------------------------------------
-   RETURN true;
+   RETURN ary_results;
    
 END;
 $BODY$
@@ -132,10 +158,12 @@ ALTER FUNCTION dz_pg.extract_constraints(
    ,varchar
    ,varchar
    ,varchar
+   ,varchar
 ) OWNER TO docker;
 
 GRANT EXECUTE ON FUNCTION dz_pg.extract_constraints(
     varchar
+   ,varchar
    ,varchar
    ,varchar
    ,varchar
