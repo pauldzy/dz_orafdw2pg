@@ -1,14 +1,29 @@
 CREATE OR REPLACE FUNCTION dz_pg.init_metadata(
-    IN  pForeignServer varchar
-   ,IN  pTargetSchema  varchar
+    IN  pForeignServer    varchar
+   ,IN  pTargetSchema     varchar
+   ,IN  pTargetTablespace varchar DEFAULT NULL
 ) RETURNS BOOLEAN
 AS
 $BODY$ 
 DECLARE
-   str_sql VARCHAR(32000);
+   str_sql        VARCHAR(32000);
+   str_tablespace VARCHAR(32000);
    
 BEGIN
 
+   ----------------------------------------------------------------------------
+   -- Step 10
+   -- Check over incoming parameters
+   ----------------------------------------------------------------------------
+   IF pTargetTablespace IS NOT NULL
+   THEN
+      str_tablespace := 'TABLESPACE ' || pTargetTablespace || ' ';
+      
+   ELSE
+      str_tablespace := ' ';
+   
+   END IF;
+   
    ----------------------------------------------------------------------------
    -- Step 10
    -- Build all_tables
@@ -491,6 +506,23 @@ BEGIN
    
    ----------------------------------------------------------------------------
    -- Step 70
+   -- Assume success
+   ----------------------------------------------------------------------------
+   str_sql := 'DROP TABLE IF EXISTS ' || pTargetSchema || '.oracle_fdw_table_map';
+   
+   EXECUTE str_sql;
+   
+   str_sql := 'CREATE TABLE ' || pTargetSchema || '.oracle_fdw_table_map('
+           || '    oracle_owner              character varying(30)  '
+           || '   ,oracle_tablename          character varying(30)  '
+           || '   ,foreign_table_schema      character varying(255) '
+           || '   ,foreign_table_name        character varying(255) '
+           || ') ' || str_tablespace;
+           
+   EXECUTE str_sql;
+   
+   ----------------------------------------------------------------------------
+   -- Step 80
    -- Assume success
    ----------------------------------------------------------------------------
    RETURN true;
