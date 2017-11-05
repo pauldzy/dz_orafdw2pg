@@ -27,6 +27,8 @@ DECLARE
    str_target_tablename VARCHAR(255);
    str_nvl_field        VARCHAR(255);
    str_nvl_isnull       VARCHAR(255);
+   str_column_name      VARCHAR(30);
+   int_srid             INTEGER;
    
 BEGIN
 
@@ -187,6 +189,54 @@ BEGIN
             ary_results := array_append(ary_results,str_temp);
             
          END IF;
+         
+      ELSIF rec.index_type = 'DOMAIN'
+      AND   rec.ityp_owner = 'MDSYS'
+      AND   rec.ityp_name  = 'SPATIAL_INDEX' 
+      THEN
+         str_sql2 := 'SELECT '
+                  || 'ARRAY( '
+                  || '   SELECT '
+                  || '   a.column_name '
+                  || '   FROM '
+                  || '   ' || pMetadataSchema || '.all_ind_columns a '
+                  || '   WHERE '
+                  || '       a.table_owner = $1 '
+                  || '   AND a.table_name = $2 '
+                  || '   AND a.index_name = $3 '
+                  || '   ORDER BY '
+                  || '   a.column_position '
+                  || ') ';
+                  
+         EXECUTE str_sql2 INTO ary_columns
+         USING str_oracle_owner,str_oracle_tablename,rec.index_name;
+         
+         str_column_name = LOWER(ary_columns[1]);
+         
+         str_sql2 := 'SELECT '
+                  || 'a.srid '
+                  || 'FROM '
+                  || pMetadataSchema || '.all_sdo_geom_metadata a '
+                  || 'WHERE '
+                  || '    a.table_owner = $1 '
+                  || 'AND a.table_name  = $2 '
+                  || 'AND a.column_name = $3 ';
+                  
+         EXECUTE str_sql2 INTO int_srid
+         USING str_oracle_owner,str_oracle_tablename,str_column_name;
+         
+         str_temp := 'ALTER TABLE ' || str_target_schema || '.' || str_target_tablename || ' '
+                     || 'ADD CONSTRAINT enforce_srid_shape CHECK('
+                     || 'st_srid(' || str_column_name || ') = ' || str(int_srid)
+                     || ') ';
+                  
+         ary_results := array_append(ary_results,str_temp);
+
+         str_temp := 'CREATE INDEX ' || LOWER(rec.index_name) || ' '
+                     || 'ON ' || str_target_schema || '.' || str_target_tablename || ' USING GIST('
+                     || str_column_name || ') ' || str_tablespace;
+                     
+         ary_results := array_append(ary_results,str_temp);
          
       END IF;
    
