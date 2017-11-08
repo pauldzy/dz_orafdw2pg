@@ -242,8 +242,9 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 
-ALTER FUNCTION dz_pg.map_foreign_table(
+ALTER FUNCTION dz_pg.copy_foreign_table(
     varchar
+   ,varchar
    ,varchar
    ,varchar
    ,varchar
@@ -251,8 +252,9 @@ ALTER FUNCTION dz_pg.map_foreign_table(
    ,boolean
 ) OWNER TO docker;
 
-GRANT EXECUTE ON FUNCTION dz_pg.map_foreign_table(
+GRANT EXECUTE ON FUNCTION dz_pg.copy_foreign_table(
     varchar
+   ,varchar
    ,varchar
    ,varchar
    ,varchar
