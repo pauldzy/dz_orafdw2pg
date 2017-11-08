@@ -14,6 +14,8 @@ DECLARE
    str_statement        VARCHAR(32000);
    int_count            INTEGER;
    ary_items            VARCHAR(32000)[];
+   r                    REFCURSOR; 
+   rec                  RECORD;
    
    str_tablespace       VARCHAR(255);
    str_oracle_owner     VARCHAR(255);
