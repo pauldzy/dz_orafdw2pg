@@ -5,12 +5,13 @@ CREATE OR REPLACE FUNCTION dz_pg.copy_foreign_table(
    ,IN  pTargetSchema      varchar
    ,IN  pTargetTableName   varchar DEFAULT NULL
    ,IN  pTargetTablespace  varchar DEFAULT NULL
+   ,IN  pForceObjectID     boolean DEFAULT FALSE
 ) RETURNS BOOLEAN
 AS
 $BODY$ 
 DECLARE
    str_sql              VARCHAR(32000);
-   str_statment         VARCHAR(32000);
+   str_statement        VARCHAR(32000);
    int_count            INTEGER;
    ary_items            VARCHAR(32000)[];
    
@@ -19,6 +20,7 @@ DECLARE
    str_oracle_tablename VARCHAR(255);
    str_target_schema    VARCHAR(255);
    str_target_tablename VARCHAR(255);
+   boo_insert_objectid  BOOLEAN;
    
 BEGIN
    
@@ -45,9 +47,51 @@ BEGIN
       str_target_tablename := LOWER(pForeignTableName);
       
    END IF;
-
+   
+   boo_insert_objectid := pForceObjectID;
+   
+   IF boo_insert_objectid IS NULL
+   THEN
+      boo_insert_objectid := FALSE;
+      
+   END IF;
+   
    ----------------------------------------------------------------------------
    -- Step 20
+   -- Check if source table already has objectid 
+   ----------------------------------------------------------------------------
+   IF boo_insert_objectid
+   THEN
+      str_sql := 'SELECT '
+              || ' a.column_name  '
+              || 'FROM '
+              || pMetadataSchema || '.all_tab_columns a '
+              || 'WHERE '
+              || '    a.owner = $1 '
+              || 'AND a.table_name = $2 ';
+              
+      OPEN r FOR EXECUTE str_sql USING str_oracle_owner,str_oracle_tablename;
+      FETCH NEXT FROM r INTO rec; 
+      
+      WHILE FOUND 
+      LOOP
+         IF LOWER(rec.column_name) = 'objectid'
+         THEN
+            boo_insert_objectid := FALSE;
+            EXIT;
+            
+         END IF;
+      
+         FETCH NEXT FROM r INTO rec; 
+
+      END LOOP;
+      
+      CLOSE r;
+   
+   END IF;
+
+   ----------------------------------------------------------------------------
+   -- Step 30
    -- Retrieve oracle source from map table
    ----------------------------------------------------------------------------
    str_sql := 'SELECT '
@@ -71,7 +115,7 @@ BEGIN
    END;
    
    ----------------------------------------------------------------------------
-   -- Step 30
+   -- Step 40
    -- Check for existing Oracle resource 
    ----------------------------------------------------------------------------
    str_sql := 'SELECT '
@@ -91,7 +135,7 @@ BEGIN
    END IF;
    
    ----------------------------------------------------------------------------
-   -- Step 40
+   -- Step 50
    -- Drop any existing table
    ----------------------------------------------------------------------------
    str_sql := 'DROP TABLE IF EXISTS ' || str_target_schema || '.' || str_target_tablename;
@@ -99,17 +143,27 @@ BEGIN
    EXECUTE str_sql;
    
    ----------------------------------------------------------------------------
-   -- Step 50
+   -- Step 60
    -- Create the target table
    ----------------------------------------------------------------------------
    str_sql := 'CREATE TABLE ' || str_target_schema || '.' || str_target_tablename || ' ' || str_tablespace
-           || 'AS SELECT * FROM ' || pForeignTableOwner || '.' || pForeignTableName || ' '
+           || 'AS SELECT ';
+           
+   IF boo_insert_objectid
+   THEN
+      str_sql := str_sql || 'CAST(NULL AS INTEGER) AS objectid, a.* ';
+   ELSE
+      str_sql := str_sql || 'a.* ';
+      
+   END IF;
+           
+   str_sql := str_sql || 'FROM ' || pForeignTableOwner || '.' || pForeignTableName || ' a '
            || 'WHERE 1 = 2 ';
    
    EXECUTE str_sql;
    
    ----------------------------------------------------------------------------
-   -- Step 60
+   -- Step 70
    -- Collect the indexing statements for table
    ----------------------------------------------------------------------------
    ary_items := dz_pg.extract_indexes(
@@ -121,14 +175,24 @@ BEGIN
       ,pTargetTablespace  := pTargetTablespace
    );
    
-   FOREACH str_statment IN ARRAY ary_items
+   FOREACH str_statement IN ARRAY ary_items
    LOOP
-      EXECUTE str_statment;
+      EXECUTE str_statement;
    
    END LOOP;
    
+   IF boo_insert_objectid
+   THEN
+      str_sql := 'CREATE UNIQUE INDEX ' || str_target_tablename || '_oid '
+              || 'ON ' || str_target_schema || '.' || str_target_tablename 
+              || '(objectid) ' || str_tablespace;
+      
+      EXECUTE str_sql;
+      
+   END IF;
+   
    ----------------------------------------------------------------------------
-   -- Step 70
+   -- Step 80
    -- Collect the constraint statements for table
    ----------------------------------------------------------------------------
    ary_items := dz_pg.extract_constraints(
@@ -139,24 +203,35 @@ BEGIN
       ,pTargetTableName   := pTargetTableName
    );
    
-   FOREACH str_statment IN ARRAY ary_items
+   FOREACH str_statement IN ARRAY ary_items
    LOOP
-      EXECUTE str_statment;
+      EXECUTE str_statement;
    
    END LOOP;
    
    ----------------------------------------------------------------------------
-   -- Step 80
+   -- Step 90
    -- Load the target table
    ----------------------------------------------------------------------------
    str_sql := 'INSERT INTO ' || str_target_schema || '.' || str_target_tablename || ' '
-           || 'SELECT * FROM ' || pForeignTableOwner || '.' || pForeignTableName || ' '
+           || 'SELECT ';
+           
+   IF boo_insert_objectid
+   THEN
+      str_sql := str_sql || 'ROW_NUMBER() OVER(), a.* ';
+   ELSE
+      str_sql := str_sql || 'a.* ';
+      
+   END IF;
+           
+   str_sql := str_sql
+           || 'FROM ' || pForeignTableOwner || '.' || pForeignTableName || ' a '
            || 'WHERE 1 = 1 ';
            
    EXECUTE str_sql;
-   
+
    ----------------------------------------------------------------------------
-   -- Step 90
+   -- Step 100
    -- Assume success
    ----------------------------------------------------------------------------
    RETURN true;
@@ -171,6 +246,7 @@ ALTER FUNCTION dz_pg.map_foreign_table(
    ,varchar
    ,varchar
    ,varchar
+   ,boolean
 ) OWNER TO docker;
 
 GRANT EXECUTE ON FUNCTION dz_pg.map_foreign_table(
@@ -179,5 +255,6 @@ GRANT EXECUTE ON FUNCTION dz_pg.map_foreign_table(
    ,varchar
    ,varchar
    ,varchar
+   ,boolean
 ) TO PUBLIC;
 
