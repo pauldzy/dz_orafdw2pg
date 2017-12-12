@@ -108,6 +108,8 @@ BEGIN
            || ' a.index_name '
            || ',a.index_type '
            || ',a.uniqueness '
+           || ',a.ityp_owner '
+           || ',a.ityp_name  '
            || 'FROM '
            || pMetadataSchema || '.all_indexes a '
            || 'WHERE '
@@ -154,7 +156,7 @@ BEGIN
                   || ') ' || str_tablespace;
                
          ary_results := array_append(ary_results,str_temp);
-         
+
       ELSIF rec.index_type IN ('FUNCTION-BASED NORMAL','FUNCTION-BASED BITMAP')
       THEN
          str_sql2 := 'SELECT '
@@ -182,14 +184,14 @@ BEGIN
          THEN
             str_temp := REGEXP_REPLACE(str_temp,'(N|n)(V|v)(L|l)\(','coalesce(');
          
-            str_temp := 'CREATE INDEX ' || LOWER(rec.index_name) || ' '
-                     || 'ON ' || str_target_schema || '.' || str_target_tablename || '('
-                     || str_temp || ') ' || str_tablespace;
-                     
-            ary_results := array_append(ary_results,str_temp);
-            
          END IF;
          
+         str_temp := 'CREATE INDEX ' || LOWER(rec.index_name) || ' '
+                  || 'ON ' || str_target_schema || '.' || str_target_tablename || '('
+                  || str_temp || ') ' || str_tablespace;
+                     
+         ary_results := array_append(ary_results,str_temp);
+   
       ELSIF rec.index_type = 'DOMAIN'
       AND   rec.ityp_owner = 'MDSYS'
       AND   rec.ityp_name  = 'SPATIAL_INDEX' 
@@ -211,33 +213,37 @@ BEGIN
          EXECUTE str_sql2 INTO ary_columns
          USING str_oracle_owner,str_oracle_tablename,rec.index_name;
          
-         str_column_name = LOWER(ary_columns[1]);
+         str_column_name = ary_columns[1];
          
          str_sql2 := 'SELECT '
                   || 'a.srid '
                   || 'FROM '
                   || pMetadataSchema || '.all_sdo_geom_metadata a '
                   || 'WHERE '
-                  || '    a.table_owner = $1 '
+                  || '    a.owner = $1 '
                   || 'AND a.table_name  = $2 '
                   || 'AND a.column_name = $3 ';
                   
          EXECUTE str_sql2 INTO int_srid
          USING str_oracle_owner,str_oracle_tablename,str_column_name;
          
-         str_temp := 'ALTER TABLE ' || str_target_schema || '.' || str_target_tablename || ' '
+         IF int_srid IS NOT NULL
+         THEN
+            str_temp := 'ALTER TABLE ' || str_target_schema || '.' || str_target_tablename || ' '
                      || 'ADD CONSTRAINT enforce_srid_shape CHECK('
-                     || 'st_srid(' || str_column_name || ') = ' || str(int_srid)
+                     || 'st_srid(' || LOWER(str_column_name) || ') = ' || dz_pg.srid_swap(int_srid)::varchar
                      || ') ';
                   
-         ary_results := array_append(ary_results,str_temp);
-
+            ary_results := array_append(ary_results,str_temp);
+         
+         END IF;
+         
          str_temp := 'CREATE INDEX ' || LOWER(rec.index_name) || ' '
                      || 'ON ' || str_target_schema || '.' || str_target_tablename || ' USING GIST('
-                     || str_column_name || ') ' || str_tablespace;
+                     || LOWER(str_column_name) || ') ' || str_tablespace;
                      
          ary_results := array_append(ary_results,str_temp);
-         
+
       END IF;
    
       FETCH NEXT FROM r INTO rec; 
