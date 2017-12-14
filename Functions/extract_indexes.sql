@@ -231,7 +231,7 @@ BEGIN
          THEN
             str_temp := 'ALTER TABLE ' || str_target_schema || '.' || str_target_tablename || ' '
                      || 'ADD CONSTRAINT enforce_srid_shape CHECK('
-                     || 'st_srid(' || LOWER(str_column_name) || ') = ' || dz_pg.srid_swap(int_srid)::varchar
+                     || 'st_srid(' || LOWER(str_column_name) || ') = ' || dz_pg.srid_replacement(int_srid)::varchar
                      || ') ';
                   
             ary_results := array_append(ary_results,str_temp);

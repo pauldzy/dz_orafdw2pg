@@ -51,7 +51,8 @@ BEGIN
    -- Step 30
    -- Generate the foreign table columns mapping
    ----------------------------------------------------------------------------
-   str_map := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.' || pOracleTable || '( ';
+   str_map := '';
+   
    str_select := 'SELECT ';
    
    str_sql := 'SELECT '
@@ -321,9 +322,10 @@ BEGIN
    
    ----------------------------------------------------------------------------
    -- Step 40
-   -- finalize and execute the create foreign table statement
+   -- finalize and execute the create foreign table statements
    ----------------------------------------------------------------------------
-   str_map := str_map || ') '
+   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.' || pOracleTable || '( '
+           || str_map || ') '
            || 'SERVER ' || pForeignServer || ' '
            || 'OPTIONS (table ''('
            || str_select
@@ -331,7 +333,14 @@ BEGIN
            || '   ' || pOracleOwner || '.' || pOracleTable || ' a '
            || ')'')';
            
-   EXECUTE str_map;
+   EXECUTE str_sql;
+   
+   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.' || pOracleTable || '_dml( '
+           || str_map || ') '
+           || 'SERVER ' || pForeignServer || ' '
+           || 'OPTIONS (schema ''' || pOracleOwner || ''', table ''' || pOracleTable || ''')';
+           
+   EXECUTE str_sql;
    
    ----------------------------------------------------------------------------
    -- Step 50
