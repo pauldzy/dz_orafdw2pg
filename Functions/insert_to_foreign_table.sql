@@ -4,6 +4,7 @@ CREATE OR REPLACE FUNCTION dz_pg.insert_to_foreign_table(
    ,IN  pTargetForSchema   varchar
    ,IN  pTargetForTable    varchar
    ,IN  pBatchSize         numeric DEFAULT 1000
+   ,IN  pInitialOffset     numeric DEFAULT 0
 ) RETURNS BOOLEAN
 AS
 $BODY$ 
@@ -13,6 +14,9 @@ DECLARE
    ary_columns        VARCHAR[];
    str_select         VARCHAR(32000);
    str_select2        VARCHAR(32000);
+   str_primary_key    VARCHAR(32000);
+   int_counter        INTEGER;
+   str_dblink         VARCHAR(4000) := 'port=5432 dbname=docker host=127.0.0.1 user=docker password=docker';
 
 BEGIN
 
@@ -72,43 +76,93 @@ BEGIN
    str_select2 := '';
    FOR i IN 1 .. array_length(ary_columns,1)
    LOOP
-      str_select := str_select || ary_columns[i];
+      str_select  := str_select  || ary_columns[i];
+      str_select2 := str_select2 || 'a.' || ary_columns[i];
 
       IF i < array_length(ary_columns,1)
       THEN
-         str_select  := str_select || ',';
-         str_select2 := 'a.' || str_select || ',';
+         str_select  := str_select  || ',';
+         str_select2 := str_select2 || ',';
 
       END IF;
 
    END LOOP;
-
+   
    ----------------------------------------------------------------------------
-   -- Step 60
+   -- Step 50
+   -- Build the column list from source
+   ----------------------------------------------------------------------------
+   SELECT
+   array_agg(a.column_name::varchar)
+   INTO ary_columns
+   FROM (
+      SELECT
+      aa.column_name 
+      FROM 
+      information_schema.key_column_usage aa
+      LEFT JOIN
+      information_schema.table_constraints bb
+      ON
+          aa.constraint_schema  = bb.table_schema
+      AND aa.constraint_name    = bb.constraint_name    
+      WHERE 
+          bb.table_schema = pSourceTableSchema 
+      AND bb.table_name   = pSourceTableName 
+      AND bb.constraint_type = 'PRIMARY KEY'
+      ORDER BY 
+      aa.ordinal_position
+   ) a;
+
+   IF ary_columns IS NULL
+   OR array_length(ary_columns,1) = 0
+   THEN
+      RAISE EXCEPTION 'Source table lacking primary key.';
+      
+   END IF;
+   
+   str_primary_key := '';
+   FOR i IN 1 .. array_length(ary_columns,1)
+   LOOP
+      str_primary_key := str_primary_key || 'a.' || ary_columns[i];
+
+      IF i < array_length(ary_columns,1)
+      THEN
+         str_primary_key := str_primary_key || ',';
+
+      END IF;
+
+   END LOOP;
+   
+   ----------------------------------------------------------------------------
+   -- Step 70
    -- Build the base sql statement
    ----------------------------------------------------------------------------
    str_sql := 'INSERT INTO ' || pTargetForSchema || '.' || pTargetForTable || '('
-           || str_select || ')'
-           || 'SELECT ' str_select2 || ' '
-           || 'FROM ' || pSourceTableSchema || '.' || pSourceTableName || ' a ';
+           || str_select || ') '
+           || 'SELECT ' || str_select2 || ' '
+           || 'FROM ' || pSourceTableSchema || '.' || pSourceTableName || ' a '
+           || 'ORDER BY ' || str_primary_key;
 
    ----------------------------------------------------------------------------
-   -- Step 70
+   -- Step 80
    -- Run the insertion loop
    ----------------------------------------------------------------------------
-   int_counter := 0;
+   int_counter := pInitialOffset;
    WHILE int_counter <= int_total_count
    LOOP
-      EXECUTE str_sql
-           || 'LIMIT  ' || pBatchSize::varchar
-           || 'OFFSET ' || int_counter::varchar;
+      PERFORM dblink(
+          str_dblink::text
+         ,str_sql::text
+            || ' LIMIT '  || pBatchSize::text
+            || ' OFFSET ' || int_counter::text
+      );
    
       int_counter := int_counter + pBatchSize;
    
    END LOOP;
 
    ----------------------------------------------------------------------------
-   -- Step 100
+   -- Step 90
    -- Assume success
    ----------------------------------------------------------------------------
    RETURN true;
@@ -123,6 +177,7 @@ ALTER FUNCTION dz_pg.insert_to_foreign_table(
    ,varchar
    ,varchar
    ,numeric
+   ,numeric
 ) OWNER TO docker;
 
 GRANT EXECUTE ON FUNCTION dz_pg.insert_to_foreign_table(
@@ -130,6 +185,7 @@ GRANT EXECUTE ON FUNCTION dz_pg.insert_to_foreign_table(
    ,varchar
    ,varchar
    ,varchar
+   ,numeric
    ,numeric
 ) TO PUBLIC;
 
