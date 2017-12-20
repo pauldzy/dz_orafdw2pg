@@ -6,6 +6,7 @@ CREATE OR REPLACE FUNCTION dz_pg.copy_foreign_table(
    ,IN  pTargetTableName   varchar DEFAULT NULL
    ,IN  pTargetTablespace  varchar DEFAULT NULL
    ,IN  pForceObjectID     boolean DEFAULT FALSE
+   ,IN  pNoCopy            boolean default FALSE
 ) RETURNS BOOLEAN
 AS
 $BODY$ 
@@ -215,23 +216,27 @@ BEGIN
    -- Step 90
    -- Load the target table
    ----------------------------------------------------------------------------
-   str_sql := 'INSERT INTO ' || str_target_schema || '.' || str_target_tablename || ' '
-           || 'SELECT ';
-           
-   IF boo_insert_objectid
+   IF NOT pNoCopy
    THEN
-      str_sql := str_sql || 'ROW_NUMBER() OVER(), a.* ';
-   ELSE
-      str_sql := str_sql || 'a.* ';
+      str_sql := 'INSERT INTO ' || str_target_schema || '.' || str_target_tablename || ' '
+              || 'SELECT ';
+           
+      IF boo_insert_objectid
+      THEN
+         str_sql := str_sql || 'ROW_NUMBER() OVER(), a.* ';
+      ELSE
+         str_sql := str_sql || 'a.* ';
       
-   END IF;
+      END IF;
            
-   str_sql := str_sql
-           || 'FROM ' || pForeignTableOwner || '.' || pForeignTableName || ' a '
-           || 'WHERE 1 = 1 ';
+      str_sql := str_sql
+              || 'FROM ' || pForeignTableOwner || '.' || pForeignTableName || ' a '
+              || 'WHERE 1 = 1 ';
            
-   EXECUTE str_sql;
+      EXECUTE str_sql;
 
+   END IF;
+   
    ----------------------------------------------------------------------------
    -- Step 100
    -- Assume success
@@ -250,6 +255,7 @@ ALTER FUNCTION dz_pg.copy_foreign_table(
    ,varchar
    ,varchar
    ,boolean
+   ,boolean
 ) OWNER TO docker;
 
 GRANT EXECUTE ON FUNCTION dz_pg.copy_foreign_table(
@@ -259,6 +265,7 @@ GRANT EXECUTE ON FUNCTION dz_pg.copy_foreign_table(
    ,varchar
    ,varchar
    ,varchar
+   ,boolean
    ,boolean
 ) TO PUBLIC;
 

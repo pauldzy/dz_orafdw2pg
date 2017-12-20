@@ -102,7 +102,7 @@ BEGIN
 
    ----------------------------------------------------------------------------
    -- Step 40
-   -- Get list of constraints
+   -- Get list of indexes
    ----------------------------------------------------------------------------
    str_sql := 'SELECT '
            || ' a.index_name '
@@ -122,7 +122,7 @@ BEGIN
    int_count := 1;
    WHILE FOUND 
    LOOP
-      IF rec.index_type IN ('BITMAP','NORMAL')
+      IF rec.index_type IN ('BITMAP','NORMAL','IOT - TOP')
       THEN
          IF rec.uniqueness = 'UNIQUE'
          THEN
@@ -230,7 +230,7 @@ BEGIN
          IF int_srid IS NOT NULL
          THEN
             str_temp := 'ALTER TABLE ' || str_target_schema || '.' || str_target_tablename || ' '
-                     || 'ADD CONSTRAINT enforce_srid_shape CHECK('
+                     || 'ADD CONSTRAINT enforce_srid_' || LOWER(str_column_name) || ' CHECK('
                      || 'st_srid(' || LOWER(str_column_name) || ') = ' || dz_pg.srid_replacement(int_srid)::varchar
                      || ') ';
                   
