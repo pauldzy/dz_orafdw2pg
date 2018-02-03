@@ -1,6 +1,7 @@
 CREATE OR REPLACE FUNCTION dz_pg.srid_replacement(
     IN  pOracleSRID     INTEGER
 ) RETURNS INTEGER
+IMMUTABLE
 AS
 $BODY$ 
 DECLARE   

@@ -1,11 +1,12 @@
 CREATE OR REPLACE FUNCTION dz_pg.insert_to_foreign_table(
-    IN  pSourceTableSchema varchar
-   ,IN  pSourceTableName   varchar
-   ,IN  pTargetForSchema   varchar
-   ,IN  pTargetForTable    varchar
-   ,IN  pBatchSize         numeric DEFAULT 1000
-   ,IN  pInitialOffset     numeric DEFAULT 0
+    IN  pSourceTableSchema VARCHAR
+   ,IN  pSourceTableName   VARCHAR
+   ,IN  pTargetForSchema   VARCHAR
+   ,IN  pTargetForTable    VARCHAR
+   ,IN  pBatchSize         NUMERIC DEFAULT 1000
+   ,IN  pInitialOffset     NUMERIC DEFAULT 0
 ) RETURNS BOOLEAN
+VOLATILE
 AS
 $BODY$ 
 DECLARE

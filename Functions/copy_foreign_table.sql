@@ -1,13 +1,14 @@
 CREATE OR REPLACE FUNCTION dz_pg.copy_foreign_table(
-    IN  pForeignTableOwner varchar
-   ,IN  pForeignTableName  varchar
-   ,IN  pMetadataSchema    varchar
-   ,IN  pTargetSchema      varchar
-   ,IN  pTargetTableName   varchar DEFAULT NULL
-   ,IN  pTargetTablespace  varchar DEFAULT NULL
-   ,IN  pForceObjectID     boolean DEFAULT FALSE
-   ,IN  pNoCopy            boolean default FALSE
+    IN  pForeignTableOwner VARCHAR
+   ,IN  pForeignTableName  VARCHAR
+   ,IN  pMetadataSchema    VARCHAR
+   ,IN  pTargetSchema      VARCHAR
+   ,IN  pTargetTableName   VARCHAR DEFAULT NULL
+   ,IN  pTargetTablespace  VARCHAR DEFAULT NULL
+   ,IN  pForceObjectID     BOOLEAN DEFAULT FALSE
+   ,IN  pNoCopy            BOOLEAN default FALSE
 ) RETURNS BOOLEAN
+VOLATILE
 AS
 $BODY$ 
 DECLARE

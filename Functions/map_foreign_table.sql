@@ -1,10 +1,11 @@
 CREATE OR REPLACE FUNCTION dz_pg.map_foreign_table(
-    IN  pOracleOwner    varchar
-   ,IN  pOracleTable    varchar
-   ,IN  pForeignServer  varchar
-   ,IN  pTargetSchema   varchar
-   ,IN  pMetadataSchema varchar
+    IN  pOracleOwner    VARCHAR
+   ,IN  pOracleTable    VARCHAR
+   ,IN  pForeignServer  VARCHAR
+   ,IN  pTargetSchema   VARCHAR
+   ,IN  pMetadataSchema VARCHAR
 ) RETURNS BOOLEAN
+VOLATILE
 AS
 $BODY$ 
 DECLARE

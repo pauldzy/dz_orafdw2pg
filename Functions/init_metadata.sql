@@ -1,8 +1,9 @@
 CREATE OR REPLACE FUNCTION dz_pg.init_metadata(
-    IN  pForeignServer    varchar
-   ,IN  pTargetSchema     varchar
-   ,IN  pTargetTablespace varchar DEFAULT NULL
+    IN  pForeignServer    VARCHAR
+   ,IN  pTargetSchema     VARCHAR
+   ,IN  pTargetTablespace VARCHAR DEFAULT NULL
 ) RETURNS BOOLEAN
+VOLATILE
 AS
 $BODY$ 
 DECLARE

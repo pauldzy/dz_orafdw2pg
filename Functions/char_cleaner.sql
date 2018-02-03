@@ -1,7 +1,8 @@
 CREATE OR REPLACE FUNCTION dz_pg.char_cleaner(
-    IN  pFieldName      varchar
-   ,IN  pTableAlias     varchar DEFAULT NULL
+    IN  pFieldName      VARCHAR
+   ,IN  pTableAlias     VARCHAR DEFAULT NULL
 ) RETURNS VARCHAR
+IMMUTABLE
 AS
 $BODY$ 
 DECLARE

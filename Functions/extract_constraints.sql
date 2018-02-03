@@ -1,10 +1,11 @@
 CREATE OR REPLACE FUNCTION dz_pg.extract_constraints(
-    IN  pForeignTableOwner varchar
-   ,IN  pForeignTableName  varchar
-   ,IN  pMetadataSchema    varchar
-   ,IN  pTargetSchema      varchar
-   ,IN  pTargetTableName   varchar DEFAULT NULL
+    IN  pForeignTableOwner VARCHAR
+   ,IN  pForeignTableName  VARCHAR
+   ,IN  pMetadataSchema    VARCHAR
+   ,IN  pTargetSchema      VARCHAR
+   ,IN  pTargetTableName   VARCHAR DEFAULT NULL
 ) RETURNS VARCHAR[]
+VOLATILE
 AS
 $BODY$ 
 DECLARE
