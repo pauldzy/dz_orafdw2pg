@@ -3,7 +3,6 @@ CREATE OR REPLACE FUNCTION dz_pg.init_metadata(
    ,IN  pTargetSchema     VARCHAR
    ,IN  pTargetTablespace VARCHAR DEFAULT NULL
 ) RETURNS BOOLEAN
-VOLATILE
 AS
 $BODY$ 
 DECLARE
@@ -550,17 +549,35 @@ BEGIN
    -- Step 100
    -- Create the map table
    ----------------------------------------------------------------------------
-   str_sql := 'DROP TABLE IF EXISTS ' || pTargetSchema || '.oracle_fdw_table_map';
+   str_sql := 'DROP TABLE IF EXISTS ' || pTargetSchema || '.pg_orafdw_table_map';
    
    EXECUTE str_sql;
    
-   str_sql := 'CREATE TABLE ' || pTargetSchema || '.oracle_fdw_table_map('
+   str_sql := 'CREATE TABLE ' || pTargetSchema || '.pg_orafdw_table_map('
            || '    ftrelid                   oid                    PRIMARY KEY '
            || '   ,ftserver                  oid                    NOT NULL '
            || '   ,oracle_owner              character varying(30)  NOT NULL '
            || '   ,oracle_tablename          character varying(30)  NOT NULL '
            || '   ,foreign_table_schema      character varying(255) NOT NULL '
            || '   ,foreign_table_name        character varying(255) NOT NULL '
+           || ') ' || str_tablespace;
+           
+   EXECUTE str_sql;
+   
+   ----------------------------------------------------------------------------
+   -- Step 100
+   -- Create the postflight table
+   ----------------------------------------------------------------------------
+   str_sql := 'DROP TABLE IF EXISTS ' || pTargetSchema || '.pg_orafdw_postflight';
+   
+   EXECUTE str_sql;
+   
+   str_sql := 'CREATE TABLE ' || pTargetSchema || '.pg_orafdw_postflight('
+           || '    copy_action_id            VARCHAR(40)  NOT NULL '
+           || '   ,copy_action_time          TIMESTAMP    NOT NULL '
+           || '   ,copy_group_keyword        VARCHAR(40)  NOT NULL '
+           || '   ,postflight_order          INTEGER      NOT NULL '
+           || '   ,postflight_action         TEXT '
            || ') ' || str_tablespace;
            
    EXECUTE str_sql;

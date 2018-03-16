@@ -47,6 +47,13 @@ BEGIN
    ----------------------------------------------------------------------------
    str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.' || pOracleTable;
    EXECUTE str_sql;
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.' || pOracleTable || '_dml';
+   EXECUTE str_sql;
+   
+   str_sql := 'DELETE FROM ' || pMetadataSchema || '.pg_orafdw_table_map '
+           || 'WHERE '
+           || 'oracle_owner = $1 AND oracle_tablename = $2 AND foreign_table_schema = $3';
+   EXECUTE str_sql USING pOracleOwner,pOracleTable,LOWER(pTargetSchema);
    
    ----------------------------------------------------------------------------
    -- Step 30
@@ -371,7 +378,7 @@ BEGIN
    -- Step 50
    -- Create the map entry
    ----------------------------------------------------------------------------
-   str_sql := 'INSERT INTO ' || pMetadataSchema || '.oracle_fdw_table_map( '
+   str_sql := 'INSERT INTO ' || pMetadataSchema || '.pg_orafdw_table_map( '
            || '    ftrelid              '
            || '   ,ftserver             '
            || '   ,oracle_owner         '
@@ -399,18 +406,18 @@ $BODY$
 LANGUAGE plpgsql;
 
 ALTER FUNCTION dz_pg.map_foreign_table(
-    varchar
-   ,varchar
-   ,varchar
-   ,varchar
-   ,varchar
+    VARCHAR
+   ,VARCHAR
+   ,VARCHAR
+   ,VARCHAR
+   ,VARCHAR
 ) OWNER TO docker;
 
 GRANT EXECUTE ON FUNCTION dz_pg.map_foreign_table(
-    varchar
-   ,varchar
-   ,varchar
-   ,varchar
-   ,varchar
+    VARCHAR
+   ,VARCHAR
+   ,VARCHAR
+   ,VARCHAR
+   ,VARCHAR
 ) TO PUBLIC;
 

@@ -65,7 +65,7 @@ BEGIN
            || ' a.oracle_owner '
            || ',a.oracle_tablename '
            || 'FROM '
-           || pMetadataSchema || '.oracle_fdw_table_map a '
+           || pMetadataSchema || '.pg_orafdw_table_map a '
            || 'WHERE '
            || '    a.foreign_table_schema = $1 '
            || 'AND a.foreign_table_name = $2 ';
@@ -264,20 +264,20 @@ $BODY$
 LANGUAGE plpgsql;
 
 ALTER FUNCTION dz_pg.extract_indexes(
-    varchar
-   ,varchar
-   ,varchar
-   ,varchar
-   ,varchar
-   ,varchar
+    VARCHAR
+   ,VARCHAR
+   ,VARCHAR
+   ,VARCHAR
+   ,VARCHAR
+   ,VARCHAR
 ) OWNER TO docker;
 
 GRANT EXECUTE ON FUNCTION dz_pg.extract_indexes(
-    varchar
-   ,varchar
-   ,varchar
-   ,varchar
-   ,varchar
-   ,varchar
+    VARCHAR
+   ,VARCHAR
+   ,VARCHAR
+   ,VARCHAR
+   ,VARCHAR
+   ,VARCHAR
 ) TO PUBLIC;
 
