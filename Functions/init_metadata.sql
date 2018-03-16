@@ -1,7 +1,7 @@
 CREATE OR REPLACE FUNCTION dz_pg.init_metadata(
-    IN  pForeignServer    VARCHAR
-   ,IN  pTargetSchema     VARCHAR
-   ,IN  pTargetTablespace VARCHAR DEFAULT NULL
+    IN  pForeignServer      VARCHAR
+   ,IN  pMetadataSchema     VARCHAR
+   ,IN  pMetadataTablespace VARCHAR DEFAULT NULL
 ) RETURNS BOOLEAN
 AS
 $BODY$ 
@@ -15,9 +15,9 @@ BEGIN
    -- Step 10
    -- Check over incoming parameters
    ----------------------------------------------------------------------------
-   IF pTargetTablespace IS NOT NULL
+   IF pMetadataTablespace IS NOT NULL
    THEN
-      str_tablespace := 'TABLESPACE ' || pTargetTablespace || ' ';
+      str_tablespace := 'TABLESPACE ' || pMetadataTablespace || ' ';
       
    ELSE
       str_tablespace := ' ';
@@ -28,11 +28,11 @@ BEGIN
    -- Step 20
    -- Build all_tables
    ----------------------------------------------------------------------------
-   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_tables';
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pMetadataSchema || '.all_tables';
    
    EXECUTE str_sql;
    
-   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_tables( '
+   str_sql := 'CREATE FOREIGN TABLE ' || pMetadataSchema || '.all_tables( '
            || '    owner                     character varying(30)  '
            || '   ,table_name                character varying(30)  '
            || '   ,tablespace_name           character varying(30)  '
@@ -98,11 +98,11 @@ BEGIN
    -- Step 30
    -- Build all_tab_columns
    ----------------------------------------------------------------------------
-   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_tab_columns';
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pMetadataSchema || '.all_tab_columns';
    
    EXECUTE str_sql;
    
-   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_tab_columns( '
+   str_sql := 'CREATE FOREIGN TABLE ' || pMetadataSchema || '.all_tab_columns( '
            || '    owner                     character varying(30)  '
            || '   ,table_name                character varying(30)  '
            || '   ,column_name               character varying(30)  '
@@ -179,11 +179,11 @@ BEGIN
    -- Step 40
    -- Build all_constraints
    ----------------------------------------------------------------------------
-   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_constraints';
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pMetadataSchema || '.all_constraints';
    
    EXECUTE str_sql;
    
-   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_constraints('
+   str_sql := 'CREATE FOREIGN TABLE ' || pMetadataSchema || '.all_constraints('
            || '    owner                     character varying(120) '
            || '   ,constraint_name           character varying(30)  '
            || '   ,constraint_type           character varying(1)   '
@@ -238,11 +238,11 @@ BEGIN
    -- Step 50
    -- Build all_cons_columns
    ----------------------------------------------------------------------------
-   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_cons_columns';
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pMetadataSchema || '.all_cons_columns';
    
    EXECUTE str_sql;
    
-   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_cons_columns('
+   str_sql := 'CREATE FOREIGN TABLE ' || pMetadataSchema || '.all_cons_columns('
            || '    owner                     character varying(30)  '
            || '   ,constraint_name           character varying(30)  '
            || '   ,table_name                character varying(30)  '
@@ -258,11 +258,11 @@ BEGIN
    -- Step 60
    -- Build all_indexes
    ----------------------------------------------------------------------------
-   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_indexes';
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pMetadataSchema || '.all_indexes';
    
    EXECUTE str_sql;
    
-   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_indexes('
+   str_sql := 'CREATE FOREIGN TABLE ' || pMetadataSchema || '.all_indexes('
            || '    owner                     character varying(30)  '
            || '   ,index_name                character varying(30)  '
            || '   ,index_type                character varying(27)  '
@@ -393,11 +393,11 @@ BEGIN
    -- Step 70
    -- Build all_ind_columns
    ----------------------------------------------------------------------------
-   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_ind_columns';
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pMetadataSchema || '.all_ind_columns';
    
    EXECUTE str_sql;
    
-   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_ind_columns('
+   str_sql := 'CREATE FOREIGN TABLE ' || pMetadataSchema || '.all_ind_columns('
            || '    index_owner               character varying(30)  '
            || '   ,index_name                character varying(30)  '
            || '   ,table_owner               character varying(30)  '
@@ -417,11 +417,11 @@ BEGIN
    -- Step 80
    -- Build all_ind_expressions
    ----------------------------------------------------------------------------
-   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_ind_expressions';
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pMetadataSchema || '.all_ind_expressions';
    
    EXECUTE str_sql;
    
-   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_ind_expressions('
+   str_sql := 'CREATE FOREIGN TABLE ' || pMetadataSchema || '.all_ind_expressions('
            || '    index_owner               character varying(30)  '
            || '   ,index_name                character varying(30)  '
            || '   ,table_owner               character varying(30)  '
@@ -438,11 +438,11 @@ BEGIN
    -- Step 90
    -- Build all_sdo_geom_metadata
    ----------------------------------------------------------------------------
-   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.all_sdo_geom_metadata';
+   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pMetadataSchema || '.all_sdo_geom_metadata';
    
    EXECUTE str_sql;
    
-   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.all_sdo_geom_metadata('
+   str_sql := 'CREATE FOREIGN TABLE ' || pMetadataSchema || '.all_sdo_geom_metadata('
            || '    owner                     character varying(32)  '
            || '   ,table_name                character varying(32)  '
            || '   ,column_name               character varying(32)  '
@@ -549,11 +549,11 @@ BEGIN
    -- Step 100
    -- Create the map table
    ----------------------------------------------------------------------------
-   str_sql := 'DROP TABLE IF EXISTS ' || pTargetSchema || '.pg_orafdw_table_map';
+   str_sql := 'DROP TABLE IF EXISTS ' || pMetadataSchema || '.pg_orafdw_table_map';
    
    EXECUTE str_sql;
    
-   str_sql := 'CREATE TABLE ' || pTargetSchema || '.pg_orafdw_table_map('
+   str_sql := 'CREATE TABLE ' || pMetadataSchema || '.pg_orafdw_table_map('
            || '    ftrelid                   oid                    PRIMARY KEY '
            || '   ,ftserver                  oid                    NOT NULL '
            || '   ,oracle_owner              character varying(30)  NOT NULL '
@@ -568,11 +568,11 @@ BEGIN
    -- Step 100
    -- Create the postflight table
    ----------------------------------------------------------------------------
-   str_sql := 'DROP TABLE IF EXISTS ' || pTargetSchema || '.pg_orafdw_postflight';
+   str_sql := 'DROP TABLE IF EXISTS ' || pMetadataSchema || '.pg_orafdw_postflight';
    
    EXECUTE str_sql;
    
-   str_sql := 'CREATE TABLE ' || pTargetSchema || '.pg_orafdw_postflight('
+   str_sql := 'CREATE TABLE ' || pMetadataSchema || '.pg_orafdw_postflight('
            || '    copy_action_id            VARCHAR(40)  NOT NULL '
            || '   ,copy_action_time          TIMESTAMP    NOT NULL '
            || '   ,copy_group_keyword        VARCHAR(40)  NOT NULL '
