@@ -59,6 +59,7 @@ SELECT dz_pg.copy_foreign_table(
       ,'npdes_bios_violation_status'
    ]
    ,pMetadataSchema    := 'ncc_whipp'
+   ,pForceObjectID     := TRUE
    ,pTargetSchema      := 'echo_dfr'
    ,pPostFlightGroup   := 'Biosolids_20180316' 
    ,pPostFlightAction  := 'Flush' 
