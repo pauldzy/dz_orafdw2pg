@@ -7,6 +7,7 @@ CREATE OR REPLACE FUNCTION dz_pg.copy_foreign_table(
    ,IN  pTargetTablespace  VARCHAR   DEFAULT NULL
    ,IN  pForceObjectID     BOOLEAN   DEFAULT FALSE
    ,IN  pNoCopy            BOOLEAN   DEFAULT FALSE
+   ,IN  pForcePublic       BOOLEAN   DEFAULT FALSE
    ,IN  pPostFlightGroup   VARCHAR   DEFAULT NULL 
    ,IN  pPostFlightAction  VARCHAR   DEFAULT NULL
    ,IN  pPostFlightGUID    VARCHAR   DEFAULT NULL
@@ -103,6 +104,7 @@ BEGIN
          ,pTargetTablespace  := pTargetTablespace
          ,pForceObjectID     := pForceObjectID 
          ,pNoCopy            := pNoCopy
+         ,pForcePublic       := pForcePublic
          ,pPostFlightGroup   := str_postflight
          ,pPostFlightAction  := str_postflight_act
          ,pPostFlightGUID    := str_unique_guid
@@ -136,6 +138,7 @@ ALTER FUNCTION dz_pg.copy_foreign_table(
    ,VARCHAR
    ,BOOLEAN
    ,BOOLEAN
+   ,BOOLEAN
    ,VARCHAR
    ,VARCHAR
    ,VARCHAR
@@ -149,6 +152,7 @@ GRANT EXECUTE ON FUNCTION dz_pg.copy_foreign_table(
    ,VARCHAR
    ,VARCHAR
    ,VARCHAR
+   ,BOOLEAN
    ,BOOLEAN
    ,BOOLEAN
    ,VARCHAR

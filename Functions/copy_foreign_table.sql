@@ -7,6 +7,7 @@ CREATE OR REPLACE FUNCTION dz_pg.copy_foreign_table(
    ,IN  pTargetTablespace  VARCHAR   DEFAULT NULL
    ,IN  pForceObjectID     BOOLEAN   DEFAULT FALSE
    ,IN  pNoCopy            BOOLEAN   DEFAULT FALSE
+   ,IN  pForcePublic       BOOLEAN   DEFAULT FALSE
    ,IN  pPostFlightGroup   VARCHAR   DEFAULT NULL
    ,IN  pPostFlightAction  VARCHAR   DEFAULT NULL
    ,IN  pPostFlightGUID    VARCHAR   DEFAULT NULL
@@ -314,9 +315,23 @@ BEGIN
       END IF;
 
    END LOOP;
-
+   
    ----------------------------------------------------------------------------
    -- Step 100
+   -- Force item to be public if requested
+   ----------------------------------------------------------------------------
+   IF pForcePublic
+   THEN
+      str_sql := 'GRANT SELECT '
+              || 'ON ' || str_target_schema || '.' || str_target_tablename || ' '
+              || 'TO public';
+              
+      EXECUTE str_sql;
+   
+   END IF;
+
+   ----------------------------------------------------------------------------
+   -- Step 110
    -- Load the target table
    ----------------------------------------------------------------------------
    IF NOT pNoCopy
@@ -341,7 +356,7 @@ BEGIN
    END IF;
 
    ----------------------------------------------------------------------------
-   -- Step 110
+   -- Step 120
    -- Assume success
    ----------------------------------------------------------------------------
    RETURN true;
@@ -359,6 +374,7 @@ ALTER FUNCTION dz_pg.copy_foreign_table(
    ,VARCHAR
    ,BOOLEAN
    ,BOOLEAN
+   ,BOOLEAN
    ,VARCHAR
    ,VARCHAR
    ,VARCHAR
@@ -372,6 +388,7 @@ GRANT EXECUTE ON FUNCTION dz_pg.copy_foreign_table(
    ,VARCHAR
    ,VARCHAR
    ,VARCHAR
+   ,BOOLEAN
    ,BOOLEAN
    ,BOOLEAN
    ,VARCHAR
