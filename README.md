@@ -118,7 +118,7 @@ SELECT dz_pg.copy_foreign_table(
       ,'rad_beach_srccit'
    ]
    ,pMetadataSchema    := 'ncc_owstg'
-   ,pForceObjectID     := 'loading_dock'
+   ,pTargetSchema      := 'loading_dock'
    ,pForcePublic       := TRUE
    ,pPostFlightGroup   := 'Beach_20180326' 
    ,pPostFlightAction  := 'Flush' 
