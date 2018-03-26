@@ -238,12 +238,16 @@ BEGIN
       ,pTargetTableName   := pTargetTableName
       ,pTargetTablespace  := pTargetTablespace
    );
+   
+   IF array_length(ary_items,1) > 0
+   THEN
+      FOREACH str_statement IN ARRAY ary_items
+      LOOP
+         EXECUTE str_statement;
 
-   FOREACH str_statement IN ARRAY ary_items
-   LOOP
-      EXECUTE str_statement;
-
-   END LOOP;
+      END LOOP;
+      
+   END IF;
 
    IF boo_insert_objectid
    THEN
