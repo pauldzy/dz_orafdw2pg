@@ -61,6 +61,7 @@ SELECT dz_pg.copy_foreign_table(
    ,pMetadataSchema    := 'ncc_whipp'
    ,pForceObjectID     := TRUE
    ,pTargetSchema      := 'echo_dfr'
+   ,pForcePublic       := TRUE
    ,pPostFlightGroup   := 'Biosolids_20180316' 
    ,pPostFlightAction  := 'Flush' 
 );
@@ -76,5 +77,59 @@ SELECT dz_pg.execute_postflight(
 ```
 
 Finally some DDL statements need to take place after all tables have been created.  Execute this last step to add those resources.
+
+#### Secondary Example:
+
+```
+SELECT dz_pg.init_metadata(
+    pForeignServer    := 'vmclydesdale'
+   ,pMetadataSchema   := 'ncc_owstg'
+);
+``` 
+
+```
+SELECT dz_pg.map_foreign_table(
+    pOracleOwner    := 'RAD_PUBLIC'
+   ,pOracleTable    := ARRAY[
+       'RAD_BEACH_A'
+      ,'RAD_BEACH_EVT2META'
+      ,'RAD_BEACH_L'
+      ,'RAD_BEACH_METADATA'
+      ,'RAD_BEACH_P'
+      ,'RAD_BEACH_SFID'
+      ,'RAD_BEACH_SRCCIT'
+   ]
+   ,pForeignServer  := 'vmclydesdale'
+   ,pTargetSchema   := 'ncc_owstg'
+   ,pMetadataSchema := 'ncc_owstg'
+);
+```
+
+```
+SELECT dz_pg.copy_foreign_table(
+    pForeignTableOwner := 'ncc_owstg'
+   ,pForeignTableName  := ARRAY[
+       'rad_beach_a'
+      ,'rad_beach_evt2meta'
+      ,'rad_beach_l'
+      ,'rad_beach_metadata'
+      ,'rad_beach_p'
+      ,'rad_beach_sfid'
+      ,'rad_beach_srccit'
+   ]
+   ,pMetadataSchema    := 'ncc_owstg'
+   ,pForceObjectID     := 'loading_dock'
+   ,pForcePublic       := TRUE
+   ,pPostFlightGroup   := 'Beach_20180326' 
+   ,pPostFlightAction  := 'Flush' 
+);
+```
+
+```
+SELECT dz_pg.execute_postflight(
+    pPostFlightGroup   := 'Beach_20180326'
+   ,pMetadataSchema    := 'ncc_owstg'
+);
+```
 
 
