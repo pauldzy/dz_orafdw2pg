@@ -16,7 +16,8 @@ First initialize the metadata system with Oracle.   Mainly this creates foreign 
 SELECT dz_pg.map_foreign_table(
     pOracleOwner    := 'ECHO_DFR'
    ,pOracleTable    := ARRAY[
-       'NPDES_BIOS_AMOUNTS'
+       'ICP_CONTROL_DATES'
+      ,'NPDES_BIOS_AMOUNTS'
       ,'NPDES_BIOS_FORMAL_ACTIONS'
       ,'NPDES_BIOS_INFML_ENF_ACTIONS'
       ,'NPDES_BIOS_INSPECTIONS'
@@ -43,7 +44,8 @@ Next map the tables you wish to migrate as foreign tables on the pg side.  This 
 SELECT dz_pg.copy_foreign_table(
     pForeignTableOwner := 'ncc_whipp'
    ,pForeignTableName  := ARRAY[
-       'npdes_bios_amounts'
+       'icp_control_dates'
+      ,'npdes_bios_amounts'
       ,'npdes_bios_formal_actions'
       ,'npdes_bios_infml_enf_actions'
       ,'npdes_bios_inspections'
