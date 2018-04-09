@@ -61,10 +61,10 @@ SELECT dz_pg.copy_foreign_table(
       ,'npdes_bios_violation_status'
    ]
    ,pMetadataSchema    := 'ncc_whipp'
-   ,pForceObjectID     := TRUE
+   ,pForceObjectID     := FALSE
    ,pTargetSchema      := 'echo_dfr'
    ,pForcePublic       := TRUE
-   ,pPostFlightGroup   := 'Biosolids_20180316' 
+   ,pPostFlightGroup   := 'Biosolids_20180409' 
    ,pPostFlightAction  := 'Flush' 
 );
 ```
@@ -73,7 +73,7 @@ The copy step does the actual work of creating a receiving table on the pg side 
 
 ```
 SELECT dz_pg.execute_postflight(
-    pPostFlightGroup   := 'Biosolids_20180316'
+    pPostFlightGroup   := 'Biosolids_20180409'
    ,pMetadataSchema    := 'ncc_whipp'
 );
 ```
