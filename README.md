@@ -31,6 +31,7 @@ SELECT dz_pg.map_foreign_table(
       ,'NPDES_BIOS_SEV_VIOLATIONS'
       ,'NPDES_BIOS_TRTMNT_PROCSS'
       ,'NPDES_BIOS_VIOLATION_STATUS'
+      ,'NPDES_BIOS_ANALY_METHODS'
    ]
    ,pForeignServer  := 'vmwhippet'
    ,pTargetSchema   := 'ncc_whipp'
@@ -59,12 +60,13 @@ SELECT dz_pg.copy_foreign_table(
       ,'npdes_bios_sev_violations'
       ,'npdes_bios_trtmnt_procss'
       ,'npdes_bios_violation_status'
+      ,'npdes_bios_analy_methods'
    ]
    ,pMetadataSchema    := 'ncc_whipp'
    ,pForceObjectID     := FALSE
    ,pTargetSchema      := 'echo_dfr'
    ,pForcePublic       := TRUE
-   ,pPostFlightGroup   := 'Biosolids_20180409' 
+   ,pPostFlightGroup   := 'Biosolids_20180423' 
    ,pPostFlightAction  := 'Flush' 
 );
 ```
@@ -73,7 +75,7 @@ The copy step does the actual work of creating a receiving table on the pg side 
 
 ```
 SELECT dz_pg.execute_postflight(
-    pPostFlightGroup   := 'Biosolids_20180409'
+    pPostFlightGroup   := 'Biosolids_20180423'
    ,pMetadataSchema    := 'ncc_whipp'
 );
 ```
