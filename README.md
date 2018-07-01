@@ -1,4 +1,4 @@
-# pg_orafdw2pg
+# dz_orafdw2pg
 PL/pgSQL code to migrate and sample data from Oracle to PostgreSQL using Oracle_FDW
 
 #### Example to move a set of tables from Oracle to PostgreSQL preserving structure, indexes and constraints:
