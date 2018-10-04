@@ -179,6 +179,34 @@ BEGIN
          
          str_comma := ',';
                
+      ELSIF rec.data_type = 'FLOAT'
+      THEN
+         str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
+         str_map    := str_map || 'numeric';
+         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
+         
+         IF rec.data_precision IS NOT NULL
+         THEN
+            str_map := str_map || '(' || rec.data_precision::varchar;
+            
+            IF rec.data_scale IS NOT NULL
+            AND rec.data_scale <> 0
+            THEN
+               str_map := str_map || ',' || rec.data_scale::varchar;
+               
+            END IF;
+            
+            str_map := str_map || ')';
+            
+         END IF;
+         
+         IF rec.nullable IS NOT NULL
+         AND rec.nullable = 'Y'
+         THEN
+            str_map := str_map || ' null';
+            
+         END IF;
+      
       ELSIF rec.data_type = 'NUMBER'
       THEN
          IF ( rec.data_length = 22 AND rec.data_precision = 1     AND rec.data_scale = 0 )
