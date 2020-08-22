@@ -39,7 +39,7 @@ BEGIN
    -- Step 30
    -- Assume success
    ----------------------------------------------------------------------------
-   RETURN true;
+   RETURN TRUE;
 
 END;
 $BODY$

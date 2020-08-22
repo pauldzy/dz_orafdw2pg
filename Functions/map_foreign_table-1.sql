@@ -4,6 +4,8 @@ CREATE OR REPLACE FUNCTION dz_pg.map_foreign_table(
    ,IN  pForeignServer  VARCHAR
    ,IN  pTargetSchema   VARCHAR
    ,IN  pMetadataSchema VARCHAR
+   ,IN  pForceCharClean BOOLEAN DEFAULT TRUE
+   ,IN  pCustomPrefetch INTEGER DEFAULT NULL
 ) RETURNS BOOLEAN
 VOLATILE
 AS
@@ -20,7 +22,7 @@ BEGIN
    IF pOracleTable IS NULL
    OR array_length(pOracleTable,1) = 0
    THEN
-      RETURN false;
+      RETURN FALSE;
       
    END IF;
    
@@ -36,11 +38,13 @@ BEGIN
          ,pForeignServer  := pForeignServer
          ,pTargetSchema   := pTargetSchema
          ,pMetadataSchema := pMetadataSchema
+         ,pForceCharClean := pForceCharClean
+         ,pCustomPrefetch := pCustomPrefetch
       );
       
       IF NOT boo_check 
       THEN
-         RETURN false;
+         RETURN FALSE;
          
       END IF;
    
@@ -50,7 +54,7 @@ BEGIN
    -- Step 60
    -- Assume success
    ----------------------------------------------------------------------------
-   RETURN true;
+   RETURN TRUE;
    
 END;
 $BODY$

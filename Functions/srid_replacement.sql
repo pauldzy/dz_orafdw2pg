@@ -32,10 +32,10 @@ $BODY$
 LANGUAGE plpgsql;
 
 ALTER FUNCTION dz_pg.srid_replacement(
-   integer
+   INTEGER
 ) OWNER TO docker;
 
 GRANT EXECUTE ON FUNCTION dz_pg.srid_replacement(
-   integer
+   INTEGER
 ) TO PUBLIC;
 

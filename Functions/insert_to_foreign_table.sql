@@ -166,27 +166,27 @@ BEGIN
    -- Step 90
    -- Assume success
    ----------------------------------------------------------------------------
-   RETURN true;
+   RETURN TRUE;
 
 END;
 $BODY$
 LANGUAGE plpgsql;
 
 ALTER FUNCTION dz_pg.insert_to_foreign_table(
-    varchar
-   ,varchar
-   ,varchar
-   ,varchar
-   ,numeric
-   ,numeric
+    VARCHAR
+   ,VARCHAR
+   ,VARCHAR
+   ,VARCHAR
+   ,NUMERIC
+   ,NUMERIC
 ) OWNER TO docker;
 
 GRANT EXECUTE ON FUNCTION dz_pg.insert_to_foreign_table(
-    varchar
-   ,varchar
-   ,varchar
-   ,varchar
-   ,numeric
-   ,numeric
+    VARCHAR
+   ,VARCHAR
+   ,VARCHAR
+   ,VARCHAR
+   ,NUMERIC
+   ,NUMERIC
 ) TO PUBLIC;
 

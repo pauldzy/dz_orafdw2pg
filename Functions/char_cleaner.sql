@@ -42,12 +42,12 @@ $BODY$
 LANGUAGE plpgsql;
 
 ALTER FUNCTION dz_pg.char_cleaner(
-    varchar
-   ,varchar
+    VARCHAR
+   ,VARCHAR
 ) OWNER TO docker;
 
 GRANT EXECUTE ON FUNCTION dz_pg.char_cleaner(
-    varchar
-   ,varchar
+    VARCHAR
+   ,VARCHAR
 ) TO PUBLIC;
 

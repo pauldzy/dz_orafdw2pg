@@ -113,7 +113,7 @@ BEGIN
       
       IF NOT boo_check 
       THEN
-         RETURN false;
+         RETURN FALSE;
          
       END IF;
    
@@ -123,7 +123,7 @@ BEGIN
    -- Step 100
    -- Assume success
    ----------------------------------------------------------------------------
-   RETURN true;
+   RETURN TRUE;
    
 END;
 $BODY$

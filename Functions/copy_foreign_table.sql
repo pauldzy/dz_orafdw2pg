@@ -363,7 +363,7 @@ BEGIN
    -- Step 120
    -- Assume success
    ----------------------------------------------------------------------------
-   RETURN true;
+   RETURN TRUE;
 
 END;
 $BODY$

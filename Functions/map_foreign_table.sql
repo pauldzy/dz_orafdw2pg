@@ -4,6 +4,8 @@ CREATE OR REPLACE FUNCTION dz_pg.map_foreign_table(
    ,IN  pForeignServer  VARCHAR
    ,IN  pTargetSchema   VARCHAR
    ,IN  pMetadataSchema VARCHAR
+   ,IN  pForceCharClean BOOLEAN DEFAULT TRUE
+   ,IN  pCustomPrefetch INTEGER DEFAULT NULL
 ) RETURNS BOOLEAN
 VOLATILE
 AS
@@ -11,7 +13,6 @@ $BODY$
 DECLARE
    str_sql      VARCHAR(32000);
    str_map      VARCHAR(32000);
-   str_select   VARCHAR(32000);
    int_count    INTEGER;
    r            REFCURSOR; 
    rec          RECORD;
@@ -47,8 +48,6 @@ BEGIN
    ----------------------------------------------------------------------------
    str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.' || pOracleTable;
    EXECUTE str_sql;
-   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '.' || pOracleTable || '_dml';
-   EXECUTE str_sql;
    
    str_sql := 'DELETE FROM ' || pMetadataSchema || '.pg_orafdw_table_map '
            || 'WHERE '
@@ -60,8 +59,6 @@ BEGIN
    -- Generate the foreign table columns mapping
    ----------------------------------------------------------------------------
    str_map := '';
-   
-   str_select := 'SELECT ';
    
    str_sql := 'SELECT '
            || ' a.column_name '
@@ -93,7 +90,6 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map || 'bytea';
-         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -108,7 +104,6 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'double precision';
-         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -123,7 +118,6 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'real';
-         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -138,7 +132,12 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'character(' || rec.data_length::varchar || ')';
-         str_select := str_select || '   ' || str_comma || dz_pg.char_cleaner(LOWER(rec.column_name),'a');
+         
+         IF pForceCharClean
+         THEN
+            str_map := str_map || ' options(strip_zeros ''true'')';
+            
+         END IF;
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -153,7 +152,12 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'text';
-         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
+         
+         IF pForceCharClean
+         THEN
+            str_map := str_map || ' options(strip_zeros ''true'')';
+            
+         END IF;
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -168,7 +172,6 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'timestamp(0)';
-         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -183,7 +186,6 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map || 'numeric';
-         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.data_precision IS NOT NULL
          THEN
@@ -214,7 +216,6 @@ BEGIN
          THEN
             str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
             str_map    := str_map    || 'integer';
-            str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
             
             IF rec.nullable IS NOT NULL
             AND rec.nullable = 'Y'
@@ -226,7 +227,6 @@ BEGIN
          ELSE
             str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
             str_map    := str_map || 'numeric';
-            str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
             
             IF rec.data_precision IS NOT NULL
             THEN
@@ -258,7 +258,6 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'character(10)';
-         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -273,7 +272,6 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'character varying';
-         str_select := str_select || '   ' || str_comma || dz_pg.char_cleaner(LOWER(rec.column_name),'a');
          
          IF rec.char_used = 'C'
          AND rec.char_length IS NOT NULL
@@ -290,6 +288,12 @@ BEGIN
             
          END IF;
          
+         IF pForceCharClean
+         THEN
+            str_map := str_map || ' options(strip_zeros ''true'')';
+            
+         END IF;
+         
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
          THEN
@@ -303,7 +307,6 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'timestamp(6)';
-         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -318,7 +321,6 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'timestamp(6)';
-         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -334,7 +336,6 @@ BEGIN
       THEN
          str_map    := str_map    || '   ' || str_comma || LOWER(rec.column_name) || '   ';
          str_map    := str_map    || 'geometry';
-         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
          
          IF rec.nullable IS NOT NULL
          AND rec.nullable = 'Y'
@@ -359,22 +360,19 @@ BEGIN
    ----------------------------------------------------------------------------
    -- Step 40
    -- finalize and execute the create foreign table statements
-   ----------------------------------------------------------------------------
+   ----------------------------------------------------------------------------   
    str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.' || pOracleTable || '( '
            || str_map || ') '
            || 'SERVER ' || pForeignServer || ' '
-           || 'OPTIONS (table ''('
-           || str_select
-           || '   FROM '
-           || '   ' || pOracleOwner || '.' || pOracleTable || ' a '
-           || ')'')';
-           
-   EXECUTE str_sql;
+           || 'OPTIONS (schema ''' || pOracleOwner || ''', table ''' || pOracleTable || '''';
    
-   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '.' || pOracleTable || '_dml( '
-           || str_map || ') '
-           || 'SERVER ' || pForeignServer || ' '
-           || 'OPTIONS (schema ''' || pOracleOwner || ''', table ''' || pOracleTable || ''')';
+   IF pCustomPrefetch IS NOT NULL
+   THEN
+      str_sql := str_sql || ', prefetch ''' || pCustomPrefetch::VARCHAR || '''';
+   
+   END IF;   
+   
+   str_sql := str_sql || ')';
            
    EXECUTE str_sql;
    
@@ -427,7 +425,7 @@ BEGIN
    -- Step 60
    -- Assume success
    ----------------------------------------------------------------------------
-   RETURN true;
+   RETURN TRUE;
    
 END;
 $BODY$
