@@ -6,6 +6,8 @@ CREATE OR REPLACE FUNCTION dz_pg.map_foreign_table(
    ,IN  pMetadataSchema VARCHAR
    ,IN  pForceCharClean BOOLEAN DEFAULT TRUE
    ,IN  pCustomPrefetch INTEGER DEFAULT NULL
+   ,IN  pTableCasing    VARCHAR DEFAULT 'SMART'
+   ,IN  pColumnCasing   VARCHAR DEFAULT 'SMART'
 ) RETURNS BOOLEAN
 VOLATILE
 AS
@@ -40,6 +42,8 @@ BEGIN
          ,pMetadataSchema := pMetadataSchema
          ,pForceCharClean := pForceCharClean
          ,pCustomPrefetch := pCustomPrefetch
+         ,pTableCasing    := pTableCasing
+         ,pColumnCasing   := pColumnCasing
       );
       
       IF NOT boo_check 
@@ -66,12 +70,20 @@ ALTER FUNCTION dz_pg.map_foreign_table(
    ,VARCHAR
    ,VARCHAR
    ,VARCHAR
+   ,BOOLEAN
+   ,INTEGER
+   ,VARCHAR
+   ,VARCHAR
 ) OWNER TO docker;
 
 GRANT EXECUTE ON FUNCTION dz_pg.map_foreign_table(
     VARCHAR
    ,VARCHAR[]
    ,VARCHAR
+   ,VARCHAR
+   ,VARCHAR
+   ,BOOLEAN
+   ,INTEGER
    ,VARCHAR
    ,VARCHAR
 ) TO PUBLIC;
