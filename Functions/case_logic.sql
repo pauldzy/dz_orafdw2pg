@@ -18,11 +18,11 @@ BEGIN
    THEN
       str_output := UPPER(str_output);
        
-   ELSIF IF pCaseLogic = 'LOWER'
+   ELSIF pCaseLogic = 'LOWER'
    THEN
       str_output := LOWER(str_output);
        
-   ELSIF IF pCaseLogic = 'SMART'
+   ELSIF pCaseLogic = 'SMART'
    THEN
       str_output := LOWER(str_output);
    

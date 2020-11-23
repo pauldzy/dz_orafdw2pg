@@ -23,7 +23,6 @@ DECLARE
    oid_ftrelid       OID;
    oid_ftserver      OID;
    str_pgtable       TEXT;
-   str_pgtable_strip TEXT;
       
 BEGIN
 
@@ -52,16 +51,12 @@ BEGIN
    -- Check if table name is valid for PostgreSQL
    ----------------------------------------------------------------------------
    str_pgtable       := dz_pg.case_logic(pOracleTable,pTableCasing);
-   str_pgtable_strip := dz_pg.case_logic(pOracleTable || '_strp0',pTableCasing);
 
    ----------------------------------------------------------------------------
    -- Step 20
    -- Drop any existing foreign table
    ----------------------------------------------------------------------------
    str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '."' || str_pgtable || '"';
-   EXECUTE str_sql;
-   
-   str_sql := 'DROP FOREIGN TABLE IF EXISTS ' || pTargetSchema || '."' || str_pgtable_strip || '"';
    EXECUTE str_sql;
    
    str_sql := 'DELETE FROM ' || pMetadataSchema || '.pg_orafdw_table_map '
@@ -156,7 +151,7 @@ BEGIN
          
          IF pForceCharClean
          THEN
-            NULL; --str_map := str_map || ' options(strip_zeros ''true'')';
+            str_map := str_map || ' options(strip_zeros ''true'')';
             
          END IF;
          
@@ -192,7 +187,7 @@ BEGIN
          
          IF pForceCharClean
          THEN
-            NULL; --str_map := str_map || ' options(strip_zeros ''true'')';
+            str_map := str_map || ' options(strip_zeros ''true'')';
             
          END IF;
          
@@ -333,7 +328,7 @@ BEGIN
          
          IF pForceCharClean
          THEN
-            NULL; --str_map := str_map || ' options(strip_zeros ''true'')';
+            str_map := str_map || ' options(strip_zeros ''true'')';
             
          END IF;
          
@@ -346,6 +341,21 @@ BEGIN
          
          str_comma := ',';
       
+      ELSIF rec.data_type = 'TIMESTAMP(2)'
+      THEN
+         str_map    := str_map    || '   ' || str_comma || '"' || dz_pg.case_logic(rec.column_name,pColumnCasing) || '" ';
+         str_map    := str_map    || 'timestamp(2)';
+         str_select := str_select || '   ' || str_comma || 'a.' || LOWER(rec.column_name);
+         
+         IF rec.nullable IS NOT NULL
+         AND rec.nullable = 'Y'
+         THEN
+            str_map := str_map || ' null';
+            
+         END IF;
+         
+         str_comma := ',';
+         
       ELSIF rec.data_type = 'TIMESTAMP(6)'
       THEN
          str_map    := str_map    || '   ' || str_comma || '"' || dz_pg.case_logic(rec.column_name,pColumnCasing) || '" ';
@@ -407,25 +417,6 @@ BEGIN
    -- Step 40
    -- finalize and execute the create foreign table statements
    ----------------------------------------------------------------------------
-   str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '."' || str_pgtable_strip || '"( '
-           || str_map || ') '
-           || 'SERVER ' || pForeignServer || ' '
-           || 'OPTIONS (table ''('
-           || str_select
-           || '   FROM '
-           || '   ' || pOracleOwner || '.' || pOracleTable || ' a '
-           || ')''';
-           
-   IF pCustomPrefetch IS NOT NULL
-   THEN
-      str_sql := str_sql || ', prefetch ''' || pCustomPrefetch::VARCHAR || '''';
-   
-   END IF;   
-   
-   str_sql := str_sql || ')';
-   
-   EXECUTE str_sql;
-
    str_sql := 'CREATE FOREIGN TABLE ' || pTargetSchema || '."' || str_pgtable || '"( '
            || str_map || ') '
            || 'SERVER ' || pForeignServer || ' '
